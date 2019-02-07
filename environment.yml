@@ -1,0 +1,12 @@
+dependencies: 
+ - numpy
+ - tensorflow
+ - docopt
+ - keras
+ - urllib3
+ - jupyter
+ - pip:
+   - dpu-utils
+   - more_itertools
+   - watermark
+
