@@ -4,7 +4,6 @@ from typing import List, Dict
 from data.graph_pb2 import FeatureNode, Graph
 
 
-# TODO add a method to separate signature from body
 class GraphFeatureExtractor(object):
     def __init__(self, graph: Graph,
                  remove_override_methods: bool,
