@@ -2,7 +2,7 @@ import logging
 import os
 from collections import Counter
 from glob import iglob
-from typing import List, Dict, Any, Iterable, Optional
+from typing import List, Dict, Any, Iterable, Tuple
 
 import numpy as np
 from dpu_utils.mlutils import Vocabulary
@@ -14,31 +14,6 @@ LoadedSamples = Dict[str, np.ndarray]
 DATA_FILE_EXTENSION = 'proto'
 
 
-#
-def get_data_files_from_directory(data_dir: str, max_num_files: Optional[int] = None) -> List[str]:
-    files = iglob(os.path.join(data_dir, '**/*.%s' % DATA_FILE_EXTENSION), recursive=True)
-    if max_num_files:
-        files = sorted(files)[:int(max_num_files)]
-    else:
-        files = list(files)
-    np.random.shuffle(files)
-    return files
-
-
-def load_data_file(path: str) -> Iterable[List[str]]:
-    """
-    Load a single data file, returning token streams.
-    TODO - make it split body and signature
-    :param path: the path for a single data file.
-    :return Iterable of lists of strings, each a list of tokens observed in the data.
-    """
-    with open(path, 'rb') as f:
-        graph = Graph()
-        graph.ParseFromString(f.read())
-        feature_extractor = GraphFeatureExtractor(graph, remove_override_methods=True, remove_short_methods=True)
-        return feature_extractor.retrieve_methods_content()
-
-
 class PreProcessor(object):
     DEFAULT_CONFIG = {
         'vocabulary_max_size': 5000,
@@ -47,30 +22,34 @@ class PreProcessor(object):
         'run_name': 'default_parser'
     }
 
-    def __init__(self, config: Dict[str, Any], dir_path: str = 'data/raw/r252-corpus-features/',
-                 max_num_files: int = None, metadata: Dict[str: Any] = None):
+    def __init__(self, config: Dict[str, Any], data_dir: str = 'data/raw/r252-corpus-features/',
+                 max_num_files: int = None, metadata: Dict[str, Any] = None):
         """
         :param config: dictionary containing parsers configs and vocabulary size.
-        :param dir_path: path to data input directory
+        :param data_dir: path to data input directory
         :param max_num_files: Maximal number of files to load.
         :param metadata: (Optional) metadata about the corpus, holds vocabulary. This is useful for test dataset.
         """
-        self.config = self.DEFAULT_CONFIG if config is None else config
-        self.dir_path = dir_path
+        if config is None:
+            config = self.DEFAULT_CONFIG
+        self.config = config
+        self.data_dir = data_dir
         self.logger = logging.getLogger(__name__)
         self.max_num_files = max_num_files
-        self.data_files = get_data_files_from_directory(self.dir_path, max_num_files)
+        self.data_files = self.load_data_files_from_directory()
         self.corpus_methods_token = self.get_tokens_from_dir()
-        self.metadata = self.get_metadata() if metadata is None else metadata
+        if metadata is None:
+            metadata = self.load_metadata()
+        self.metadata = metadata
 
-    def get_metadata(self) -> Dict[str, Vocabulary]:
+    def load_metadata(self) -> Dict[str, Vocabulary]:
         """ Return model metadata such as a vocabulary. """
-        if self.metadata is not None:
-            return self.metadata
         max_size = self.config['vocabulary_max_size']
         count_threshold = self.config['vocabulary_count_threshold']
-        # Count occurrences of vocabulary
-        tokens_counter = Counter(token for method_token in self.corpus_methods_token for token in method_token)
+        # Count occurrences of the body vocabulary
+        tokens_counter = Counter(token for method_token in self.corpus_methods_token
+                                 for (name, body) in method_token
+                                 for token in body)
         token_vocab = Vocabulary.create_vocabulary(tokens_counter,
                                                    count_threshold=count_threshold,
                                                    max_size=max_size,
@@ -85,11 +64,11 @@ class PreProcessor(object):
         """ Returns a tensoirsed data representation from directory path"""
         return self.load_data_from_raw_sample_sequences(token_seq for token_seq in self.corpus_methods_token)
 
-    def get_tokens_from_dir(self) -> List[List[str]]:
+    def get_tokens_from_dir(self) -> List[List[Tuple[str, List[str]]]]:
         """ Returns a list of all tokens in the data files. """
-        return [methods_token for file in self.data_files for methods_token in load_data_file(file)]
+        return [methods_token for file in self.data_files for methods_token in self.load_data_file(file)]
 
-    def load_data_from_raw_sample_sequences(self, token_seqs: Iterable[List[str]]) -> LoadedSamples:
+    def load_data_from_raw_sample_sequences(self, token_seqs: Iterable[List[Tuple[str, List[str]]]]) -> LoadedSamples:
         """  Load and tensorise data from a file.
 
         Args:
@@ -118,3 +97,25 @@ class PreProcessor(object):
         loaded_data['tokens'] = np.array(loaded_data['tokens'])
         loaded_data['tokens_lengths'] = np.array(loaded_data['tokens_lengths'])
         return loaded_data
+
+    def load_data_files_from_directory(self) -> List[str]:
+        files = iglob(os.path.join(self.data_dir, '**/*.%s' % DATA_FILE_EXTENSION), recursive=True)
+        if self.max_num_files:
+            files = sorted(files)[:int(self.max_num_files)]
+        else:
+            files = list(files)
+        np.random.shuffle(files)
+        return files
+
+    @staticmethod
+    def load_data_file(path: str) -> Iterable[List[Tuple[str, List[str]]]]:
+        """
+        Load a single data file, returning token streams.
+        :param path: the path for a single data file.
+        :return Iterable of lists of (name, [body])
+        """
+        with open(path, 'rb') as f:
+            graph = Graph()
+            graph.ParseFromString(f.read())
+            feature_extractor = GraphFeatureExtractor(graph, remove_override_methods=True)
+            yield feature_extractor.retrieve_methods_content()

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from data.graph_pb2 import FeatureNode, Graph
 
@@ -21,7 +21,7 @@ class GraphFeatureExtractor(object):
         self.remove_override_methods = remove_override_methods
         self.min_line_of_codes = min_line_of_codes
 
-    def retrieve_methods_content(self) -> List[(str, List[str])]:
+    def retrieve_methods_content(self) -> List[Tuple[str, List[str]]]:
         """
         Retrieve the content of every method separting the signature and body
         :return list of tuple (method, list of each token of the method's body)
@@ -75,7 +75,7 @@ class GraphFeatureExtractor(object):
 
         return method_token_list_out
 
-    def _dfs(self, node_id: str, out: List[(str, int)]):
+    def _dfs(self, node_id: str, out: List[Tuple[str, int]]):
         """ Traverse the graph to the end, keeping track of the content and node's ID """
         leaf_children = self.edges_map[node_id]
         for child_id in leaf_children:
