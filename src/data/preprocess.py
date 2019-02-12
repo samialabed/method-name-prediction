@@ -80,7 +80,6 @@ class PreProcessor(object):
         max_chunk_length = self.config['max_chunk_length']
         vocab = self.metadata['token_vocab']
 
-        # TODO figure out what to do with name, tensorise the body only, what about name?
         for file_token_seqs in files_token_seqs:
             for (method_name, method_body) in file_token_seqs:
                 loaded_data['name_tokens'].append(vocab.get_id_or_unk_multiple(method_name,
