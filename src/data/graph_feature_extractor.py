@@ -7,7 +7,7 @@ from data.graph_pb2 import FeatureNode, Graph
 class GraphFeatureExtractor(object):
     def __init__(self, graph: Graph,
                  remove_override_methods: bool,
-                 min_line_of_codes: int = 3):
+                 min_line_of_codes: int):
         """
         Extract features from graph_pb2.py graph.
 

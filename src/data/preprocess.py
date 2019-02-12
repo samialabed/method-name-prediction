@@ -16,10 +16,11 @@ DATA_FILE_EXTENSION = 'proto'
 
 class PreProcessor(object):
     DEFAULT_CONFIG = {
-        'vocabulary_max_size': 5000,
-        'max_chunk_length': 50,
-        'vocabulary_count_threshold': 2,
-        'run_name': 'default_parser'
+        'vocabulary_max_size': 5000,  # the vocabulary embedding maximum size.
+        'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
+        'vocabulary_count_threshold': 2,  # the minimium occurances of a token to not be considered a rare token.
+        'run_name': 'default_parser',  # meaningful name of the experiment configuration.
+        'min_line_of_codes': 3  # minimum line of codes the method should contain to be considered in the corpus.
     }
 
     def __init__(self, config: Dict[str, Any], data_dir: str = 'data/raw/r252-corpus-features/',
@@ -119,8 +120,7 @@ class PreProcessor(object):
         np.random.shuffle(files)
         return files
 
-    @staticmethod
-    def load_data_file(path: str) -> Iterable[List[Tuple[str, List[str]]]]:
+    def load_data_file(self, path: str) -> Iterable[List[Tuple[str, List[str]]]]:
         """
         Load a single data file, returning token streams.
         :param path: the path for a single data file.
@@ -129,5 +129,7 @@ class PreProcessor(object):
         with open(path, 'rb') as f:
             graph = Graph()
             graph.ParseFromString(f.read())
-            feature_extractor = GraphFeatureExtractor(graph, remove_override_methods=True)
+            feature_extractor = GraphFeatureExtractor(graph,
+                                                      remove_override_methods=True,
+                                                      min_line_of_codes=self.config['min_line_of_codes'])
             yield feature_extractor.retrieve_methods_content()
