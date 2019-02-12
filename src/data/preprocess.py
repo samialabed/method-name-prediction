@@ -47,9 +47,13 @@ class PreProcessor(object):
         max_size = self.config['vocabulary_max_size']
         count_threshold = self.config['vocabulary_count_threshold']
         # Count occurrences of the body vocabulary
-        tokens_counter = Counter(token for method_token in self.corpus_methods_token
-                                 for (name, body) in method_token
-                                 for token in body)
+        tokens_counter = Counter()
+
+        for method_token in self.corpus_methods_token:
+            for (name, body) in method_token:
+                tokens_counter.update(body)
+                tokens_counter.update({name: len(body)})  # Give more weight to method names with longer body
+
         token_vocab = Vocabulary.create_vocabulary(tokens_counter,
                                                    count_threshold=count_threshold,
                                                    max_size=max_size,
@@ -71,10 +75,7 @@ class PreProcessor(object):
         :param files_token_seqs: Sequences of tokens per file to load samples from.
         :return The loaded data, as a dictionary mapping names to numpy arrays.
         """
-        loaded_data = {
-            "tokens": [],
-            "tokens_lengths": [],
-        }
+        loaded_data = {'name_tokens': [], 'name_tokens_length': [], 'body_tokens': [], 'body_tokens_lengths': []}
 
         max_chunk_length = self.config['max_chunk_length']
         vocab = self.metadata['token_vocab']
@@ -82,16 +83,28 @@ class PreProcessor(object):
         # TODO figure out what to do with name, tensorise the body only, what about name?
         for file_token_seqs in files_token_seqs:
             for (method_name, method_body) in file_token_seqs:
-                loaded_data['tokens_lengths'].append(len(method_body))
-                loaded_data['tokens'].append(vocab.get_id_or_unk_multiple(method_body,
-                                                                          pad_to_size=max_chunk_length))
+                loaded_data['name_tokens'].append(vocab.get_id_or_unk_multiple(method_name,
+                                                                               pad_to_size=max_chunk_length))
+                loaded_data['name_tokens_length'].append(len(method_name))
+                loaded_data['body_tokens_lengths'].append(len(method_body))
+                loaded_data['body_tokens'].append(vocab.get_id_or_unk_multiple(method_body,
+                                                                               pad_to_size=max_chunk_length))
 
         # Turn into numpy arrays for easier slicing later:
-        assert len(loaded_data['tokens']) == len(loaded_data['tokens_lengths']), \
-            "Loaded 'tokens' and 'tokens_lengths' lists need to be aligned and of" \
+        assert len(loaded_data['body_tokens']) == len(loaded_data['body_tokens_lengths']), \
+            "Loaded 'body_tokens' and 'body_tokens_lengths' lists need to be aligned and of" \
             + "the same length!"
-        loaded_data['tokens'] = np.array(loaded_data['tokens'])
-        loaded_data['tokens_lengths'] = np.array(loaded_data['tokens_lengths'])
+
+        assert len(loaded_data['name_tokens']) == len(loaded_data['name_tokens_length']), \
+            "Loaded 'name_tokens' and 'name_tokens_length' lists need to be aligned and of" \
+            + "the same length!"
+
+        loaded_data['name_tokens'] = np.array(loaded_data['name_tokens'])
+        loaded_data['name_tokens_length'] = np.array(loaded_data['name_tokens_length'])
+
+        loaded_data['body_tokens'] = np.array(loaded_data['body_tokens'])
+        loaded_data['body_tokens_lengths'] = np.array(loaded_data['body_tokens_lengths'])
+
         return loaded_data
 
     def get_tokens_from_dir(self) -> List[List[Tuple[str, List[str]]]]:
