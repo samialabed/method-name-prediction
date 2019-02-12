@@ -64,18 +64,12 @@ class PreProcessor(object):
         """ Returns a tensoirsed data representation from directory path"""
         return self.load_data_from_raw_sample_sequences(token_seq for token_seq in self.corpus_methods_token)
 
-    def get_tokens_from_dir(self) -> List[List[Tuple[str, List[str]]]]:
-        """ Returns a list of all tokens in the data files. """
-        return [methods_token for file in self.data_files for methods_token in self.load_data_file(file)]
-
-    def load_data_from_raw_sample_sequences(self, token_seqs: Iterable[List[Tuple[str, List[str]]]]) -> LoadedSamples:
-        """  Load and tensorise data from a file.
-
-        Args:
-            token_seqs: Sequences of tokens to load samples from.
-
-        Returns:
-            The loaded data, as a dictionary mapping names to numpy arrays.
+    def load_data_from_raw_sample_sequences(self,
+                                            files_token_seqs: Iterable[List[Tuple[str, List[str]]]]) -> LoadedSamples:
+        """
+        Load and tensorise data from a file.
+        :param files_token_seqs: Sequences of tokens per file to load samples from.
+        :return The loaded data, as a dictionary mapping names to numpy arrays.
         """
         loaded_data = {
             "tokens": [],
@@ -85,10 +79,12 @@ class PreProcessor(object):
         max_chunk_length = self.config['max_chunk_length']
         vocab = self.metadata['token_vocab']
 
-        for method_tokens in token_seqs:
-            loaded_data['tokens_lengths'].append(len(method_tokens))
-            loaded_data['tokens'].append(vocab.get_id_or_unk_multiple(method_tokens,
-                                                                      pad_to_size=max_chunk_length))
+        # TODO figure out what to do with name, tensorise the body only, what about name?
+        for file_token_seqs in files_token_seqs:
+            for (method_name, method_body) in file_token_seqs:
+                loaded_data['tokens_lengths'].append(len(method_body))
+                loaded_data['tokens'].append(vocab.get_id_or_unk_multiple(method_body,
+                                                                          pad_to_size=max_chunk_length))
 
         # Turn into numpy arrays for easier slicing later:
         assert len(loaded_data['tokens']) == len(loaded_data['tokens_lengths']), \
@@ -97,6 +93,10 @@ class PreProcessor(object):
         loaded_data['tokens'] = np.array(loaded_data['tokens'])
         loaded_data['tokens_lengths'] = np.array(loaded_data['tokens_lengths'])
         return loaded_data
+
+    def get_tokens_from_dir(self) -> List[List[Tuple[str, List[str]]]]:
+        """ Returns a list of all tokens in the data files. """
+        return [methods_token for file in self.data_files for methods_token in self.load_data_file(file)]
 
     def load_data_files_from_directory(self) -> List[str]:
         files = iglob(os.path.join(self.data_dir, '**/*.%s' % DATA_FILE_EXTENSION), recursive=True)
