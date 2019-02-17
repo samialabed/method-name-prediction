@@ -53,7 +53,7 @@ class GraphFeatureExtractor(object):
         """ Returns mapping of each parent -> all children"""
         d = defaultdict(list)
 
-        source_dest_list = list(map(lambda edge: (edge.sourceId, edge.destinationId), self.graph.edge))
+        source_dest_list = map(lambda edge: (edge.sourceId, edge.destinationId), self.graph.edge)
         for k, v in source_dest_list:
             d[k].append(v)
 
@@ -86,7 +86,7 @@ class GraphFeatureExtractor(object):
                 self._dfs(child_id, out)
 
     @staticmethod
-    def separate_method_name_from_body(method_token: List[str]) -> (str, List[str]):
+    def separate_method_name_from_body(method_token: List[str]) -> Tuple[str, List[str]]:
         method_name = ''
         for idx, token in enumerate(method_token):
             # the method name is the first token that comes before '('
