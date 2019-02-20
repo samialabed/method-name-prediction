@@ -10,6 +10,7 @@ from dpu_utils.mlutils import Vocabulary
 from data.graph_feature_extractor import GraphFeatureExtractor
 from data.graph_pb2 import Graph
 
+NameBodyTokens = Tuple[List[str], List[str]]
 LoadedSamples = Dict[str, np.ndarray]
 DATA_FILE_EXTENSION = 'proto'
 
@@ -18,7 +19,7 @@ class PreProcessor(object):
     DEFAULT_CONFIG = {
         'vocabulary_max_size': 5000,  # the vocabulary embedding maximum size.
         'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
-        'vocabulary_count_threshold': 2,  # the minimium occurances of a token to not be considered a rare token.
+        'vocabulary_count_threshold': 2,  # the minimum occurrences of a token to not be considered a rare token.
         'run_name': 'default_parser',  # meaningful name of the experiment configuration.
         'min_line_of_codes': 3,  # minimum line of codes the method should contain to be considered in the corpus.
         'skip_tests': True  # skip files that contain test
@@ -54,7 +55,7 @@ class PreProcessor(object):
         for method_token in self.corpus_methods_token:
             for (name, body) in method_token:
                 tokens_counter.update(body)
-                tokens_counter.update({name: len(body)})  # Give more weight to method names with longer body
+                tokens_counter.update(name)
 
         token_vocab = Vocabulary.create_vocabulary(tokens_counter,
                                                    count_threshold=count_threshold,
@@ -70,8 +71,7 @@ class PreProcessor(object):
         """ Returns a tensoirsed data representation from directory path"""
         return self.load_data_from_raw_sample_sequences(token_seq for token_seq in self.corpus_methods_token)
 
-    def load_data_from_raw_sample_sequences(self,
-                                            files_token_seqs: Iterable[List[Tuple[str, List[str]]]]) -> LoadedSamples:
+    def load_data_from_raw_sample_sequences(self, files_token_seqs: Iterable[List[NameBodyTokens]]) -> LoadedSamples:
         """
         Load and tensorise data from a file.
         :param files_token_seqs: Sequences of tokens per file to load samples from.
@@ -108,7 +108,7 @@ class PreProcessor(object):
 
         return loaded_data
 
-    def get_tokens_from_dir(self) -> List[List[Tuple[str, List[str]]]]:
+    def get_tokens_from_dir(self) -> List[List[NameBodyTokens]]:
         """ Returns a list of all tokens in the data files. """
         return [methods_token for file in self.data_files for methods_token in self.load_data_file(file)]
 
@@ -125,7 +125,7 @@ class PreProcessor(object):
         np.random.shuffle(files)
         return files
 
-    def load_data_file(self, path: str) -> Iterable[List[Tuple[str, List[str]]]]:
+    def load_data_file(self, path: str) -> Iterable[List[NameBodyTokens]]:
         """
         Load a single data file, returning token streams.
         :param path: the path for a single data file.
