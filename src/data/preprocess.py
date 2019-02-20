@@ -20,7 +20,8 @@ class PreProcessor(object):
         'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
         'vocabulary_count_threshold': 2,  # the minimium occurances of a token to not be considered a rare token.
         'run_name': 'default_parser',  # meaningful name of the experiment configuration.
-        'min_line_of_codes': 3  # minimum line of codes the method should contain to be considered in the corpus.
+        'min_line_of_codes': 3,  # minimum line of codes the method should contain to be considered in the corpus.
+        'skip_tests': True  # skip files that contain test
     }
 
     def __init__(self, config: Dict[str, Any], data_dir: str = 'data/raw/r252-corpus-features/',
@@ -112,7 +113,11 @@ class PreProcessor(object):
         return [methods_token for file in self.data_files for methods_token in self.load_data_file(file)]
 
     def load_data_files_from_directory(self) -> List[str]:
-        files = iglob(os.path.join(self.data_dir, '**/*.%s' % DATA_FILE_EXTENSION), recursive=True)
+        files = iglob(os.path.join(self.data_dir, '**/*.{}'.format(DATA_FILE_EXTENSION)), recursive=True)
+
+        # Skip tests and exception classes
+        if self.config['skip_tests']:
+            files = filter(lambda file: not file.endswith(("Test.java.proto", "Exception*")), files)
         if self.max_num_files:
             files = sorted(files)[:int(self.max_num_files)]
         else:
