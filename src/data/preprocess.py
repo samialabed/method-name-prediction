@@ -77,7 +77,7 @@ class PreProcessor(object):
         :param files_token_seqs: Sequences of tokens per file to load samples from.
         :return The loaded data, as a dictionary mapping names to numpy arrays.
         """
-        loaded_data = {'name_tokens': [], 'name_tokens_length': [], 'body_tokens': [], 'body_tokens_lengths': []}
+        loaded_data = {'name_tokens': [], 'name_tokens_length': [], 'body_tokens': [], 'body_tokens_length': []}
 
         max_chunk_length = self.config['max_chunk_length']
         vocab = self.metadata['token_vocab']
@@ -87,13 +87,13 @@ class PreProcessor(object):
                 loaded_data['name_tokens'].append(vocab.get_id_or_unk_multiple(method_name,
                                                                                pad_to_size=max_chunk_length))
                 loaded_data['name_tokens_length'].append(len(method_name))
-                loaded_data['body_tokens_lengths'].append(len(method_body))
+                loaded_data['body_tokens_length'].append(len(method_body))
                 loaded_data['body_tokens'].append(vocab.get_id_or_unk_multiple(method_body,
                                                                                pad_to_size=max_chunk_length))
 
         # Turn into numpy arrays for easier slicing later:
-        assert len(loaded_data['body_tokens']) == len(loaded_data['body_tokens_lengths']), \
-            "Loaded 'body_tokens' and 'body_tokens_lengths' lists need to be aligned and of" \
+        assert len(loaded_data['body_tokens']) == len(loaded_data['body_tokens_length']), \
+            "Loaded 'body_tokens' and 'body_tokens_length' lists need to be aligned and of" \
             + "the same length!"
 
         assert len(loaded_data['name_tokens']) == len(loaded_data['name_tokens_length']), \
@@ -104,7 +104,7 @@ class PreProcessor(object):
         loaded_data['name_tokens_length'] = np.array(loaded_data['name_tokens_length'])
 
         loaded_data['body_tokens'] = np.array(loaded_data['body_tokens'])
-        loaded_data['body_tokens_lengths'] = np.array(loaded_data['body_tokens_lengths'])
+        loaded_data['body_tokens_length'] = np.array(loaded_data['body_tokens_length'])
 
         return loaded_data
 
@@ -117,7 +117,7 @@ class PreProcessor(object):
 
         # Skip tests and exception classes
         if self.config['skip_tests']:
-            files = filter(lambda file: not file.endswith(("Test.java.proto", "Exception*")), files)
+            files = filter(lambda file: not file.endswith(("Test.java.proto", "Exception.java.proto")), files)
         if self.max_num_files:
             files = sorted(files)[:int(self.max_num_files)]
         else:
