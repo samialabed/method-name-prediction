@@ -34,19 +34,17 @@ class AttentionFeatures(tf.keras.Model):
         # embedding_dim = D in the paper
         # w1, w2 are the window sizes of the convolutions, hyperparameters
         # ht−1 ∈ R represents information from the previous subtokens m0 . . . mt−1
-        super(AttentionFeatures, self).__init__()
+        super().__init__()
         # Use 1D convolutions as input is text.
         self.conv1 = layers.Conv1D(k1, w1, activation='relu')
         self.conv2 = layers.Conv1D(k2, w2)
         self.dropout = layers.Dropout(dropout_rate)
         self.do_dropout = do_dropout
 
-    def call(self, input: List[tf.Tensor], training=False, **kwargs):
-        C, h_t = input  # C is code_tokens, h_t is the previous hidden state
-        # C = [bodies len, batch size, emb dim]
-        # h_t = [1, batch size, k2]
-        C = C.permute(1, 2, 0)  # input to conv needs n_channels as dim 1
-        h_t = h_t.permute(1, 2, 0)  # from [1, batch size, k2] to [batch size, k2, 1]
+    def call(self, inputs: List[tf.Tensor], training=False, **kwargs):
+        C, h_t = inputs  # C is code_tokens, h_t is the previous hidden state
+        # C = [batch size, emb dim]
+        # h_t = [batch size, k2]
 
         L_1 = self.conv1(C)
         # L_1 = [batch size, k1, bodies len - w1 + 1]
@@ -72,7 +70,7 @@ class AttentionWeights(tf.keras.Model):
     def __init__(self, w3, dropout_rate, do_dropout):
         # TODO experiment with doing dropout here, I don't think it make much sense
         # w3 are the window sizes of the convolutions, hyperparameters
-        super(AttentionWeights, self).__init__()
+        super().__init__()
         self.conv1 = layers.Conv1D(1, w3, activation='softmax')
         self.dropout = layers.Dropout(dropout_rate)
         self.do_dropout = do_dropout
