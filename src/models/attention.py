@@ -30,7 +30,7 @@ class AttentionFeatures(tf.keras.Model):
         return L_feat
     """
 
-    def __init__(self, k1, w1, k2, w2, dropout_rate=0.5, do_dropout=True):
+    def __init__(self, k1, w1, k2, w2, dropout_rate, do_dropout):
         # embedding_dim = D in the paper
         # w1, w2 are the window sizes of the convolutions, hyperparameters
         # ht−1 ∈ R represents information from the previous subtokens m0 . . . mt−1
@@ -69,7 +69,7 @@ class AttentionWeights(tf.keras.Model):
         :returns the normalized attention weights vector with length LEN(c).
     """
 
-    def __init__(self, w3, dropout_rate=0.5, do_dropout=True):
+    def __init__(self, w3, dropout_rate, do_dropout):
         # TODO experiment with doing dropout here, I don't think it make much sense
         # w3 are the window sizes of the convolutions, hyperparameters
         super(AttentionWeights, self).__init__()
