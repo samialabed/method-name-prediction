@@ -14,6 +14,7 @@ https://arxiv.org/abs/1602.03001
 """
 
 
+# TODO add loggers instead of print
 class AttentionFeatures(tf.keras.Model):
     """
         <From the paper>
@@ -30,7 +31,7 @@ class AttentionFeatures(tf.keras.Model):
         return L_feat
     """
 
-    def __init__(self, k1, w1, k2, w2, dropout_rate, do_dropout):
+    def __init__(self, k1, w1, k2, w2, dropout_rate):
         # embedding_dim = D in the paper
         # w1, w2 are the window sizes of the convolutions, hyperparameters
         # ht−1 ∈ R represents information from the previous subtokens m0 . . . mt−1
@@ -39,23 +40,32 @@ class AttentionFeatures(tf.keras.Model):
         self.conv1 = layers.Conv1D(k1, w1, activation='relu')
         self.conv2 = layers.Conv1D(k2, w2)
         self.dropout = layers.Dropout(dropout_rate)
-        self.do_dropout = do_dropout
+        self.permuter = layers.Permute((2, 3, 1))
 
     def call(self, inputs: List[tf.Tensor], training=False, **kwargs):
         C, h_t = inputs  # C is code_tokens, h_t is the previous hidden state
-        # C = [batch size, emb dim]
-        # h_t = [batch size, k2]
+        print("C shape = {}, h_t shape = {}".format(C.shape, h_t.shape))
+        # C = [bodies len, batch size, emb dim]
+        # h_t = [1, batch size, k2]
+        C = self.permuter(C)
+        h_t = self.permuter(h_t)
+        print("C shape = {}, h_t shape = {}".format(C.shape, h_t.shape))
+        # C = [batch size, emb dim, bodies len]
+        # h_t = [batch size, k2, 1]
 
         L_1 = self.conv1(C)
+        print("L_1 shape = {}".format(L_1.shape))
         # L_1 = [batch size, k1, bodies len - w1 + 1]
-        if self.do_dropout:
-            L_1 = self.dropout(L_1, training=training)
-        L_2 = self.conv2(L_1) * h_t  # elementwise multiplication
+        L_1 = self.dropout(L_1, training=training)
+
+        L_2 = layers.Multiply()([self.conv2(L_1), h_t])  # elementwise multiplication
         # L_2 = [batch size, k2, bodies len - w1 - w2 + 2]
+        print("L_2 shape = {}".format(L_2.shape))
         if self.do_dropout:
             L_2 = self.dropout(L_2, training=training)
         # perform L2 normalisation (I suspect that what  L feat <-- L2/||L2||2 means :))
         L_feat = tf.keras.utils.normalize(L_2, order=2)
+        print("L_feat shape = {}".format(L_feat))
         return L_feat
 
 
@@ -67,17 +77,15 @@ class AttentionWeights(tf.keras.Model):
         :returns the normalized attention weights vector with length LEN(c).
     """
 
-    def __init__(self, w3, dropout_rate, do_dropout):
-        # TODO experiment with doing dropout here, I don't think it make much sense
+    def __init__(self, w3, dropout_rate):
         # w3 are the window sizes of the convolutions, hyperparameters
         super().__init__()
         self.conv1 = layers.Conv1D(1, w3, activation='softmax')
         self.dropout = layers.Dropout(dropout_rate)
-        self.do_dropout = do_dropout
 
     def call(self, l_feat: tf.Tensor, training=False, **kwargs):
         attention_weight = self.conv1(l_feat)
+        print("attention_weight shape = {}".format(attention_weight.shape))
         # L_1 = [batch size, k1, bodies len - w1 + 1]
-        if self.do_dropout:
-            attention_weight = self.dropout(attention_weight, training=training)
+        attention_weight = self.dropout(attention_weight, training=training)
         return attention_weight
