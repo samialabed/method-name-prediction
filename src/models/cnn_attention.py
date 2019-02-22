@@ -23,19 +23,16 @@ class ConvAttention(tf.keras.Model):
                  w1,
                  w2,
                  w3,
-                 dropout_rate=0.5,
-                 do_dropout=True):
+                 dropout_rate=0.5):
         # TODO experiment with doing dropout here, I don't think it make much sense
         super(ConvAttention, self).__init__()
 
-        self.do_dropout = do_dropout
         self.dropout_rate = dropout_rate
-
         # input already padded from the DLU vocabs library (LookupAndPad is already padded so just lookup)
         # mask padding values, maybe unknown too?
         self.masking_layer = layers.Masking(mask_value=0)
-        self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate, do_dropout)
-        self.attention_weights_layer = AttentionWeights(w3, dropout_rate, do_dropout)
+        self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate)
+        self.attention_weights_layer = AttentionWeights(w3, dropout_rate)
 
     def call(self, input: List[tf.Tensor], training=False, **kwargs):
         # input is the body tokens padded and tensorised, and previous state
