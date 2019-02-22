@@ -14,6 +14,9 @@ NameBodyTokens = Tuple[List[str], List[str]]
 LoadedSamples = Dict[str, np.ndarray]
 DATA_FILE_EXTENSION = 'proto'
 
+SENTENCE_START_TOKEN = '<s>'
+SENTENCE_END_TOKEN = '</s>'
+
 
 class PreProcessor(object):
     DEFAULT_CONFIG = {
@@ -62,6 +65,9 @@ class PreProcessor(object):
                                                    max_size=max_size,
                                                    add_unk=True,
                                                    add_pad=True)
+        # ADD sentence start and end tokens
+        token_vocab.add_or_get_id(SENTENCE_START_TOKEN)
+        token_vocab.add_or_get_id(SENTENCE_END_TOKEN)
 
         self.logger.info('{} Vocabulary created'.format(len(token_vocab)))
         # TODO - add more stats about the directory, such as number of methods, longest method, etc.
@@ -81,17 +87,29 @@ class PreProcessor(object):
 
         max_chunk_length = self.config['max_chunk_length']
         vocab = self.metadata['token_vocab']
+        start_sentence_token_id = vocab.get_id_or_unk_multiple([SENTENCE_START_TOKEN], pad_to_size=max_chunk_length)
+        end_sentence_token_id = vocab.get_id_or_unk_multiple([SENTENCE_END_TOKEN], pad_to_size=max_chunk_length)
 
         for file_token_seqs in files_token_seqs:
             for (method_name, method_body) in file_token_seqs:
+                # <S> method name </S>
+                loaded_data['name_tokens'].append(start_sentence_token_id)
+                loaded_data['name_tokens_length'].append(1)  # token start token
                 loaded_data['name_tokens'].append(vocab.get_id_or_unk_multiple(method_name,
                                                                                pad_to_size=max_chunk_length))
                 loaded_data['name_tokens_length'].append(len(method_name))
-                loaded_data['body_tokens_length'].append(len(method_body))
+                loaded_data['name_tokens_length'].append(1)
+                loaded_data['name_tokens'].append(end_sentence_token_id)
+
+                # <S> method body </S>
+                loaded_data['body_tokens'].append(start_sentence_token_id)
+                loaded_data['body_tokens_length'].append(1)
                 loaded_data['body_tokens'].append(vocab.get_id_or_unk_multiple(method_body,
                                                                                pad_to_size=max_chunk_length))
+                loaded_data['body_tokens_length'].append(len(method_body))
+                loaded_data['body_tokens'].append(end_sentence_token_id)
+                loaded_data['body_tokens_length'].append(1)
 
-        # Turn into numpy arrays for easier slicing later:
         assert len(loaded_data['body_tokens']) == len(loaded_data['body_tokens_length']), \
             "Loaded 'body_tokens' and 'body_tokens_length' lists need to be aligned and of" \
             + "the same length!"
