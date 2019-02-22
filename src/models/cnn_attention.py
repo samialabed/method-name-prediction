@@ -1,3 +1,5 @@
+from typing import List
+
 import tensorflow as tf
 from tensorflow.python.keras import layers
 
@@ -15,9 +17,7 @@ class ConvAttention(tf.keras.Model):
     over all subtokens in V .
     """
 
-    def __init__(self, vocabulary_size,
-                 embedding_dim,
-                 max_chunk_length,
+    def __init__(self,
                  k1,
                  k2,
                  w1,
@@ -30,24 +30,20 @@ class ConvAttention(tf.keras.Model):
 
         self.do_dropout = do_dropout
         self.dropout_rate = dropout_rate
-        self.vocabulary_size = vocabulary_size
-        self.embedding_dim = embedding_dim
 
         # input already padded from the DLU vocabs library (LookupAndPad is already padded so just lookup)
-        self.embedding_layer = layers.Embedding(vocabulary_size, embedding_dim, input_length=max_chunk_length)
         # mask padding values, maybe unknown too?
         self.masking_layer = layers.Masking(mask_value=0)
-        self.gru_layer = layers.GRUCell(k2)  # defaults to tanh activation per the paper
         self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate, do_dropout)
         self.attention_weights_layer = AttentionWeights(w3, dropout_rate, do_dropout)
 
-    def call(self, tokens: tf.Tensor, training=False, **kwargs):
-        # input is the body tokens padded and tensorised
-        embeddings = self.embedding_layer(tokens)
-        initial_state = self.gru_layer.get_initial_state(embeddings)
-        L_feat = self.attention_feature_layer([embeddings, initial_state])
+    def call(self, input: List[tf.Tensor], training=False, **kwargs):
+        # input is the body tokens padded and tensorised, and previous state
+        tokens, h_t = input
+        L_feat = self.attention_feature_layer([tokens, h_t])
         # L_feat = len(c) + const x k2
         alpha = self.attention_weights_layer(L_feat)
-        n_hat = tf.reduce_sum(alpha * embeddings)  # this doesn't look right?
-        return n_hat
-        # TODO The paper describes </s> tokens, should I change the processor to do that?
+        n_hat = tf.reduce_sum(alpha * tokens)  # this doesn't look right?
+        n = layers.Softmax(n_hat.T)
+        n = self.masking_layer(n)  # remove paddings
+        return n
