@@ -37,10 +37,20 @@ class ConvAttention(tf.keras.Model):
     def call(self, input: List[tf.Tensor], training=False, **kwargs):
         # input is the body tokens padded and tensorised, and previous state
         tokens, h_t = input
+        print("ConvAttention: Tokens shape = {}, h_t shape = {}".format(tokens.shape, h_t.shape))
         L_feat = self.attention_feature_layer([tokens, h_t])
+        print("ConvAttention: L_feat shape = {}".format(L_feat.shape))
+
         # L_feat = len(c) + const x k2
         alpha = self.attention_weights_layer(L_feat)
-        n_hat = tf.reduce_sum(alpha * tokens)  # this doesn't look right?
-        n = layers.Softmax(n_hat.T)
-        n = self.masking_layer(n)  # remove paddings
-        return n
+        # print("ConvAttention: alpha shape = {}".format(alpha.shape))
+        # alpha_with_emb = tf.keras.backend.transpose(alpha) * tokens
+        # print("ConvAttention: alpha_with_emb shape = {}".format(alpha_with_emb.shape))
+        # n_hat = tf.reduce_sum(alpha_with_emb)
+        #
+        # n = layers.Softmax(n_hat)
+        # n = self.masking_layer(n)  # remove paddings
+        #
+        # print("ConvAttention: n shape = {}".format(n.shape))
+
+        return alpha
