@@ -56,7 +56,7 @@ class AttentionFeatures(tf.keras.Model):
         L_2 = self.conv2(L_1)
         print("AttentionFeatures: L_2 shape = {}".format(L_2.shape))
         # elementwise multiplication with h_t to keep only relevant features (acting like a gating-like mechanism)
-        L_2 = layers.Multiply()([L_2, h_t])
+        L_2 = L_2 * h_t
 
         # L_2 = [batch size, k2, bodies len - w1 - w2 + 2]
         print("AttentionFeatures: L_2 shape  after multiply = {}".format(L_2.shape))

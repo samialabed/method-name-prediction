@@ -1,5 +1,3 @@
-from typing import List
-
 import tensorflow as tf
 from tensorflow.python.keras import layers
 
@@ -18,6 +16,9 @@ class ConvAttention(tf.keras.Model):
     """
 
     def __init__(self,
+                 vocabulary_size,
+                 embedding_dim,
+                 max_chunk_length,
                  k1,
                  k2,
                  w1,
@@ -27,30 +28,36 @@ class ConvAttention(tf.keras.Model):
         # TODO experiment with doing dropout here, I don't think it make much sense
         super(ConvAttention, self).__init__()
 
+        self.embedding_layer = layers.Embedding(vocabulary_size,
+                                                embedding_dim,
+                                                input_length=max_chunk_length)
+        self.bias_vector = layers.Embedding(vocabulary_size, 1)
+
         self.dropout_rate = dropout_rate
-        # input already padded from the DLU vocabs library (LookupAndPad is already padded so just lookup)
-        # mask padding values, maybe unknown too?
         self.masking_layer = layers.Masking(mask_value=0)
+        self.gru_layer = layers.GRU(k2, return_state=True)
         self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate)
         self.attention_weights_layer = AttentionWeights(w3, dropout_rate)
 
-    def call(self, input: List[tf.Tensor], training=False, **kwargs):
+    def call(self, code_block: tf.Tensor, training=False, **kwargs):
         # input is the body tokens padded and tensorised, and previous state
-        tokens, h_t = input
+        tokens = self.embedding_layer(code_block)
+        bias = self.bias_vector(code_block)
+        _, h_t = self.gru_layer(tokens)  # h_t = [batch_size, units (k2))
+
         print("ConvAttention: Tokens shape = {}, h_t shape = {}".format(tokens.shape, h_t.shape))
         L_feat = self.attention_feature_layer([tokens, h_t])
         print("ConvAttention: L_feat shape = {}".format(L_feat.shape))
 
         # L_feat = len(c) + const x k2
         alpha = self.attention_weights_layer(L_feat)
-        # print("ConvAttention: alpha shape = {}".format(alpha.shape))
-        # alpha_with_emb = tf.keras.backend.transpose(alpha) * tokens
-        # print("ConvAttention: alpha_with_emb shape = {}".format(alpha_with_emb.shape))
-        # n_hat = tf.reduce_sum(alpha_with_emb)
-        #
-        # n = layers.Softmax(n_hat)
-        # n = self.masking_layer(n)  # remove paddings
-        #
-        # print("ConvAttention: n shape = {}".format(n.shape))
+        alpha = self.masking_layer(alpha)  # remove paddings
 
-        return alpha
+        n_hat = tf.reduce_sum(alpha * tokens, axis=1)
+        # n_hat = [batch size, embedding dimension]
+        print("ConvAttention: n_hat shape = {}".format(n_hat.shape))
+
+        softmax = layers.Softmax()(tf.transpose(n_hat * tokens) + bias)
+        print("ConvAttention: softmax shape = {}".format(softmax.shape))
+        # softmax = [embedding dimension, chunk size, batch size]
+        return softmax
