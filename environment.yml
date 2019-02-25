@@ -5,6 +5,7 @@ dependencies:
  - keras
  - urllib3
  - jupyter
+ - jupyter_tensorboard
  - pip:
    - dpu-utils
    - more_itertools

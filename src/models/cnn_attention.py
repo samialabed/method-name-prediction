@@ -35,7 +35,7 @@ class ConvAttention(tf.keras.Model):
 
         self.dropout_rate = dropout_rate
         self.masking_layer = layers.Masking(mask_value=0)
-        self.gru_layer = layers.GRU(k2, return_state=True)
+        self.gru_layer = layers.GRU(k2, return_state=True, stateful=True)
         self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate)
         self.attention_weights_layer = AttentionWeights(w3, dropout_rate)
 
@@ -43,7 +43,7 @@ class ConvAttention(tf.keras.Model):
         # input is the body tokens padded and tensorised, and previous state
         tokens = self.embedding_layer(code_block)
         bias = self.bias_vector(code_block)
-        _, h_t = self.gru_layer(tokens)  # h_t = [batch_size, units (k2))
+        _, h_t = self.gru_layer(tokens, training=training)  # h_t = [batch_size, units (k2))
 
         print("ConvAttention: Tokens shape = {}, h_t shape = {}".format(tokens.shape, h_t.shape))
         L_feat = self.attention_feature_layer([tokens, h_t])
@@ -57,7 +57,8 @@ class ConvAttention(tf.keras.Model):
         # n_hat = [batch size, embedding dimension]
         print("ConvAttention: n_hat shape = {}".format(n_hat.shape))
 
-        softmax = layers.Softmax()(tf.transpose(n_hat * tokens) + bias)
-        print("ConvAttention: softmax shape = {}".format(softmax.shape))
-        # softmax = [embedding dimension, chunk size, batch size]
-        return softmax
+        n = layers.Softmax()(tf.transpose(n_hat * tokens) + bias)
+        print("ConvAttention: n shape = {}".format(n.shape))
+        # n = [embedding dimension, chunk size, batch size]
+
+        return n  # TODO toMap
