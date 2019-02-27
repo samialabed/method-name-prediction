@@ -6,6 +6,8 @@ dependencies:
  - urllib3
  - jupyter
  - jupyter_tensorboard
+ - pydot
+ - graphviz
  - pip:
    - dpu-utils
    - more_itertools

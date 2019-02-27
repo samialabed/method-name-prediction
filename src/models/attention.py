@@ -1,7 +1,7 @@
 from typing import List
 
 import tensorflow as tf
-from tensorflow.python.keras import layers
+import tensorflow.python.keras as K
 
 """
 Attention features and weight as defined in [1] (page 3)
@@ -39,9 +39,10 @@ class AttentionFeatures(tf.keras.Model):
         # Use 1D convolutions as input is text.
         # create k1 filters, each of window size of w1, the output is k1 different convolutions.
         # causal padding to ensure the conv keep the size of the input throughout
-        self.conv1 = layers.Conv1D(k1, w1, activation='relu', padding='causal')
-        self.conv2 = layers.Conv1D(k2, w2, padding='causal')
-        self.dropout = layers.Dropout(dropout_rate)
+        self.conv1 = K.layers.Conv1D(k1, w1, activation='relu', padding='causal')
+        self.conv2 = K.layers.Conv1D(k2, w2, padding='causal')
+        self.dropout = K.layers.Dropout(dropout_rate)
+        self.l2_norm = K.layers.Lambda(lambda x: K.backend.l2_normalize(x, axis=1))
 
     def call(self, inputs: List[tf.Tensor], training=False, **kwargs):
         C, h_t = inputs  # C is code_tokens, h_t is the previous hidden state
@@ -62,7 +63,7 @@ class AttentionFeatures(tf.keras.Model):
         print("AttentionFeatures: L_2 shape  after multiply = {}".format(L_2.shape))
         L_2 = self.dropout(L_2, training=training)
         # perform L2 normalisation (I suspect that what  L feat <-- L2/||L2||2 means :))
-        L_feat = tf.keras.backend.l2_normalize(L_2)
+        L_feat = self.l2_norm(L_2)
         print("AttentionFeatures: L_feat shape = {}".format(L_feat))
         return L_feat
 
@@ -78,8 +79,8 @@ class AttentionWeights(tf.keras.Model):
     def __init__(self, w3, dropout_rate):
         # w3 are the window sizes of the convolutions, hyperparameters
         super().__init__()
-        self.conv1 = layers.Conv1D(1, w3, activation='softmax', padding='causal', use_bias=True)
-        self.dropout = layers.Dropout(dropout_rate)
+        self.conv1 = K.layers.Conv1D(1, w3, activation='softmax', padding='causal', use_bias=True)
+        self.dropout = K.layers.Dropout(dropout_rate)
 
     def call(self, l_feat: tf.Tensor, training=False, **kwargs):
         print("AttentionWeights: l_feat shape = {}".format(l_feat.shape))
