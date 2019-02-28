@@ -14,14 +14,11 @@ NameBodyTokens = Tuple[List[str], List[str]]
 LoadedSamples = Dict[str, np.ndarray]
 DATA_FILE_EXTENSION = 'proto'
 
-SENTENCE_START_TOKEN = '<s>'
-SENTENCE_END_TOKEN = '</s>'
-
 
 class PreProcessor(object):
     DEFAULT_CONFIG = {
         'vocabulary_max_size': 5000,  # the vocabulary embedding maximum size.
-        'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
+        'max_chunk_length': 100,  # the maximum size of a token, smaller tokens will be padded to size.
         'vocabulary_count_threshold': 2,  # the minimum occurrences of a token to not be considered a rare token.
         'run_name': 'default_parser',  # meaningful name of the experiment configuration.
         'min_line_of_codes': 3,  # minimum line of codes the method should contain to be considered in the corpus.
@@ -65,9 +62,6 @@ class PreProcessor(object):
                                                    max_size=max_size,
                                                    add_unk=True,
                                                    add_pad=True)
-        # ADD sentence start and end tokens
-        token_vocab.add_or_get_id(SENTENCE_START_TOKEN)
-        token_vocab.add_or_get_id(SENTENCE_END_TOKEN)
 
         self.logger.info('{} Vocabulary created'.format(len(token_vocab)))
         # TODO - add more stats about the directory, such as number of methods, longest method, etc.
@@ -83,46 +77,26 @@ class PreProcessor(object):
         :param files_token_seqs: Sequences of tokens per file to load samples from.
         :return The loaded data, as a dictionary mapping names to numpy arrays.
         """
-        loaded_data = {'name_tokens': [], 'name_tokens_length': [], 'body_tokens': [], 'body_tokens_length': []}
+        loaded_data = {'name_tokens': [], 'body_tokens': []}
 
         max_chunk_length = self.config['max_chunk_length']
         vocab = self.metadata['token_vocab']
-        start_sentence_token_id = vocab.get_id_or_unk_multiple([SENTENCE_START_TOKEN], pad_to_size=max_chunk_length)
-        end_sentence_token_id = vocab.get_id_or_unk_multiple([SENTENCE_END_TOKEN], pad_to_size=max_chunk_length)
 
         for file_token_seqs in files_token_seqs:
             for (method_name, method_body) in file_token_seqs:
                 # <S> method name </S>
-                loaded_data['name_tokens'].append(start_sentence_token_id)
-                loaded_data['name_tokens_length'].append(1)  # token start token
                 loaded_data['name_tokens'].append(vocab.get_id_or_unk_multiple(method_name,
                                                                                pad_to_size=max_chunk_length))
-                loaded_data['name_tokens_length'].append(len(method_name))
-                loaded_data['name_tokens_length'].append(1)
-                loaded_data['name_tokens'].append(end_sentence_token_id)
-
                 # <S> method body </S>
-                loaded_data['body_tokens'].append(start_sentence_token_id)
-                loaded_data['body_tokens_length'].append(1)
                 loaded_data['body_tokens'].append(vocab.get_id_or_unk_multiple(method_body,
                                                                                pad_to_size=max_chunk_length))
-                loaded_data['body_tokens_length'].append(len(method_body))
-                loaded_data['body_tokens'].append(end_sentence_token_id)
-                loaded_data['body_tokens_length'].append(1)
 
-        assert len(loaded_data['body_tokens']) == len(loaded_data['body_tokens_length']), \
-            "Loaded 'body_tokens' and 'body_tokens_length' lists need to be aligned and of" \
-            + "the same length!"
-
-        assert len(loaded_data['name_tokens']) == len(loaded_data['name_tokens_length']), \
-            "Loaded 'name_tokens' and 'name_tokens_length' lists need to be aligned and of" \
+        assert len(loaded_data['body_tokens']) == len(loaded_data['name_tokens']), \
+            "Loaded 'body_tokens' and 'name_tokens' lists need to be aligned and of" \
             + "the same length!"
 
         loaded_data['name_tokens'] = np.array(loaded_data['name_tokens'])
-        loaded_data['name_tokens_length'] = np.array(loaded_data['name_tokens_length'])
-
         loaded_data['body_tokens'] = np.array(loaded_data['body_tokens'])
-        loaded_data['body_tokens_length'] = np.array(loaded_data['body_tokens_length'])
 
         return loaded_data
 
@@ -135,7 +109,9 @@ class PreProcessor(object):
 
         # Skip tests and exception classes
         if self.config['skip_tests']:
-            files = filter(lambda file: not file.endswith(("Test.java.proto", "Exception.java.proto")), files)
+            files = filter(
+                lambda file: not file.endswith(("Test.java.proto", "TestCase.java.proto", "Exception.java.proto")),
+                files)
         if self.max_num_files:
             files = sorted(files)[:int(self.max_num_files)]
         else:
@@ -149,10 +125,19 @@ class PreProcessor(object):
         :param path: the path for a single data file.
         :return Iterable of lists of (name, [body])
         """
-        with open(path, 'rb') as f:
-            graph = Graph()
-            graph.ParseFromString(f.read())
-            feature_extractor = GraphFeatureExtractor(graph,
-                                                      remove_override_methods=True,
-                                                      min_line_of_codes=self.config['min_line_of_codes'])
-            yield feature_extractor.retrieve_methods_content()
+        try:
+            with open(path, 'rb') as f:
+                graph = Graph()
+                graph.ParseFromString(f.read())
+                feature_extractor = GraphFeatureExtractor(graph,
+                                                          remove_override_methods=True,
+                                                          min_line_of_codes=self.config['min_line_of_codes'])
+                yield feature_extractor.retrieve_methods_content()
+        # TODO separate this into multiple exceptions and use it to skip tests and others files
+        except Exception as e:
+            print("Failed to load data from path: {}. Exception: {}".format(path, e))
+
+
+if __name__ == '__main__':
+    data = PreProcessor(config=PreProcessor.DEFAULT_CONFIG,
+                        data_dir='data/raw/r252-corpus-features/org/elasticsearch/action/admin/cluster/allocation/')

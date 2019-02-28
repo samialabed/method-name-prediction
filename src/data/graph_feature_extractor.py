@@ -4,6 +4,9 @@ from typing import List, Dict, Tuple
 
 from data.graph_pb2 import FeatureNode, Graph
 
+SENTENCE_START_TOKEN = '<s>'
+SENTENCE_END_TOKEN = '</s>'
+
 
 class GraphFeatureExtractor(object):
     def __init__(self, graph: Graph,
@@ -40,7 +43,8 @@ class GraphFeatureExtractor(object):
                     continue
 
             name, body = self.separate_method_name_from_body(method_token_list)
-            methods_name_body_list.append((name, body))
+            if name:
+                methods_name_body_list.append((name, body))
         return methods_name_body_list
 
     def find_all_method_nodes(self) -> List[FeatureNode]:
@@ -81,7 +85,7 @@ class GraphFeatureExtractor(object):
 
         return id_to_content_dict
 
-    def extract_body_and_signature(self, method_node: FeatureNode) -> List[str]:
+    def extract_body_and_signature(self, method_node: FeatureNode) -> List[List[str]]:
         """ Returns the signature and body of a method node, sorted in order of appearing in the corpus."""
         method_token_list_out = []
         self._dfs(method_node.id, method_token_list_out)
@@ -102,20 +106,27 @@ class GraphFeatureExtractor(object):
                 self._dfs(child_id, out)
 
     @staticmethod
-    def separate_method_name_from_body(method_token: List[str]) -> Tuple[List[str], List[str]]:
+    def separate_method_name_from_body(method_token: List[List[str]]) -> Tuple[List[str], List[str]]:
         method_name = []
+        body = []
         for idx, token in enumerate(method_token):
+            if 'abstract' in token:  # skip abstract methods
+                return None, None
             # the method name is the first token that comes before '('
-            if idx + 1 < len(method_token) and 'lparen' in method_token[idx + 1]:
-                method_name = token
-            if 'lbrace' in token:
+            elif idx + 1 < len(method_token) and 'lparen' in method_token[idx + 1]:
+                method_name.append(SENTENCE_START_TOKEN)
+                method_name.extend([t for t in token])
+                method_name.append(SENTENCE_END_TOKEN)
+            elif 'lbrace' in token:
                 # the body is everything after open brace '{' up to the very end which is '}'
-                body = [item for sublist in method_token[idx + 1: len(method_token) - 1] for item in sublist]
-
+                body.append(SENTENCE_START_TOKEN)
+                # The reason for iterating over the list of lists is to flatmap the list of list of body tokens
+                body.extend([item for sublist in method_token[idx + 1: len(method_token) - 1] for item in sublist])
+                body.append(SENTENCE_END_TOKEN)
                 assert len(method_name) != 0, 'Method name should not be empty'
                 assert len(body) != 0, 'Method body should not be empty'
 
                 return method_name, body
 
         raise Exception(
-            'Failed to separate the method name and body from the token.')  # Should I include the token used?
+            'Failed to separate the method name and body from the token. Method tokens: {}'.format(method_token))
