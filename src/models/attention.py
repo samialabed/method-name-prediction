@@ -1,7 +1,7 @@
 from typing import List
 
 import tensorflow as tf
-import tensorflow.python.keras as K
+from tensorflow.python.keras import backend, layers, models
 
 """
 Attention features and weight as defined in [1] (page 3)
@@ -15,7 +15,7 @@ https://arxiv.org/abs/1602.03001
 
 
 # TODO add loggers instead of print
-class AttentionFeatures(tf.keras.Model):
+class AttentionFeatures(models.Model):
     """
         <From the paper>
         attention_features is that given the input c, it uses convolution to compute k2 features for each location.
@@ -31,7 +31,7 @@ class AttentionFeatures(tf.keras.Model):
         return L_feat
     """
 
-    def __init__(self, k1, w1, k2, w2, dropout_rate):
+    def __init__(self, k1: int, w1: int, k2: int, w2: int, dropout_rate: float):
         # embedding_dim = D in the paper
         # w1, w2 are the window sizes of the convolutions, hyperparameters
         # ht−1 ∈ R represents information from the previous subtokens m0 . . . mt−1
@@ -39,10 +39,11 @@ class AttentionFeatures(tf.keras.Model):
         # Use 1D convolutions as input is text.
         # create k1 filters, each of window size of w1, the output is k1 different convolutions.
         # causal padding to ensure the conv keep the size of the input throughout
-        self.conv1 = K.layers.Conv1D(k1, w1, activation='relu', padding='causal')
-        self.conv2 = K.layers.Conv1D(k2, w2, padding='causal')
-        self.dropout = K.layers.Dropout(dropout_rate)
-        self.l2_norm = K.layers.Lambda(lambda x: K.backend.l2_normalize(x, axis=1))
+        self.conv1 = layers.Conv1D(k1, w1, activation='relu', padding='causal')
+        self.conv2 = layers.Conv1D(k2, w2, padding='causal')
+        self.dropout = layers.Dropout(dropout_rate)
+        self.l2_norm = layers.Lambda(lambda x: backend.l2_normalize(x, axis=1))
+        self.multiply_layer = layers.Multiply()
 
     def call(self, inputs: List[tf.Tensor], training=False, **kwargs):
         C, h_t = inputs  # C is code_tokens, h_t is the previous hidden state
@@ -57,18 +58,18 @@ class AttentionFeatures(tf.keras.Model):
         L_2 = self.conv2(L_1)
         print("AttentionFeatures: L_2 shape = {}".format(L_2.shape))
         # elementwise multiplication with h_t to keep only relevant features (acting like a gating-like mechanism)
-        L_2 = L_2 * h_t
+        L_2 = self.multiply_layer([L_2, h_t])
 
         # L_2 = [batch size, k2, bodies len - w1 - w2 + 2]
         print("AttentionFeatures: L_2 shape  after multiply = {}".format(L_2.shape))
         L_2 = self.dropout(L_2, training=training)
-        # perform L2 normalisation (I suspect that what  L feat <-- L2/||L2||2 means :))
+        # perform L2 normalisation
         L_feat = self.l2_norm(L_2)
         print("AttentionFeatures: L_feat shape = {}".format(L_feat))
         return L_feat
 
 
-class AttentionWeights(tf.keras.Model):
+class AttentionWeights(models.Model):
     """
         Accepts L_feat from attention_features and a convolution kernel K of size k2 × w3 ×1.
         Pseudocode from the paper: attention_weights (attention features Lfeat, kernel K):
@@ -79,8 +80,8 @@ class AttentionWeights(tf.keras.Model):
     def __init__(self, w3, dropout_rate):
         # w3 are the window sizes of the convolutions, hyperparameters
         super().__init__()
-        self.conv1 = K.layers.Conv1D(1, w3, activation='softmax', padding='causal', use_bias=True)
-        self.dropout = K.layers.Dropout(dropout_rate)
+        self.conv1 = layers.Conv1D(1, w3, activation='softmax', padding='causal', use_bias=True)
+        self.dropout = layers.Dropout(dropout_rate)
 
     def call(self, l_feat: tf.Tensor, training=False, **kwargs):
         print("AttentionWeights: l_feat shape = {}".format(l_feat.shape))
