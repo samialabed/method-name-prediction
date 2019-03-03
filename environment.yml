@@ -1,15 +1,16 @@
+name: method-name-prediction
 dependencies: 
+ - python=3.6.8
  - numpy
  - tensorflow
  - docopt
  - keras
  - urllib3
  - jupyter
- - jupyter_tensorboard
  - pydot
  - graphviz
  - pip:
    - dpu-utils
    - more_itertools
    - watermark
-
+   - jupyter_tensorboard
