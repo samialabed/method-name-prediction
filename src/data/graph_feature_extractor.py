@@ -110,7 +110,7 @@ class GraphFeatureExtractor(object):
         method_name = []
         body = []
         for idx, token in enumerate(method_token):
-            if 'abstract' in token:  # skip abstract methods
+            if 'abstract' in token or 'test' in token:  # skip abstract methods and tests
                 return None, None
             # the method name is the first token that comes before '('
             elif idx + 1 < len(method_token) and 'lparen' in method_token[idx + 1]:
