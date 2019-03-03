@@ -1,6 +1,8 @@
+import tensorflow as tf
 from tensorflow.python import keras, Tensor
 
 from models.attention import AttentionFeatures, AttentionWeights
+from utils.activations import LogSoftmax
 
 
 class ConvAttention(keras.Model):
@@ -30,18 +32,19 @@ class ConvAttention(keras.Model):
 
         self.embedding_layer = keras.layers.Embedding(vocabulary_size,
                                                       embedding_dim,
-                                                      input_length=max_chunk_length)
-        self.masking_layer = keras.layers.Masking(mask_value=0)
+                                                      input_length=max_chunk_length,
+                                                      name='cnn_att_embedding')
 
-        self.gru_layer = keras.layers.GRU(k2, return_state=True, stateful=True)
+        self.gru_layer = keras.layers.GRU(k2, return_state=True, stateful=True, name='cnn_att_gru')
         self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate)
         self.attention_weights_layer = AttentionWeights(w3, dropout_rate)
-        # dense layer: n ← vector sum of Ei * ai. Followed by E * n_t + bias, mapped to probability of words embedding
-        self.dense_layer = keras.layers.Dense(vocabulary_size, activation='softmax')
+        # dense layer: E * n_t + bias, mapped to probability of words embedding
+        self.dense_layer = keras.layers.Dense(vocabulary_size, activation='softmax', name='cnn_att_dense')
+        # self.dense_layer = keras.layers.Dense(vocabulary_size, activation=LogSoftmax(), name='cnn_att_dense')
 
     def call(self, code_block: Tensor, training=False, **kwargs):
         # input is the body tokens_embedding padded and tensorised, and previous state
-        code_block = self.masking_layer(code_block)
+        mask_vector = tf.cast(tf.equal(code_block, 0), dtype=tf.float32)  # Shape [batch size, chunk length]
         tokens_embedding = self.embedding_layer(code_block)
         # if testing: tf.random > drop_rate: self.gru_layer(predicted embedding)
         _, h_t = self.gru_layer(tokens_embedding, training=training)  # h_t = [batch_size, units (k2))
@@ -51,8 +54,18 @@ class ConvAttention(keras.Model):
         print("ConvAttention: L_feat shape = {}".format(l_feat.shape))
 
         # L_feat = len(c) + const x k2
-        alpha = self.attention_weights_layer(l_feat)
-        n = self.dense_layer(alpha)
+        alpha = self.attention_weights_layer([l_feat, mask_vector])
+        print("ConvAttention: alpha shape = {}".format(alpha.shape))
+        # alpha = [batch size, embedding] weights over embeddings
+        n_hat = tf.reduce_sum(keras.layers.Multiply()([tf.expand_dims(alpha, axis=-1), tokens_embedding]), axis=-1)
+        print("ConvAttention: n_hat shape = {}".format(n_hat.shape))
+        # n_hat = [batch size, embedding]
+
+        n = self.dense_layer(tokens_embedding * tf.transpose(n_hat))
         print("ConvAttention: n shape = {}".format(n.shape))
-        # n = [embedding dimension, chunk size, batch size]
+        # n = [batch size, embedding, vocabulary size] probability of each token appearing in the embedding
+
+        # n = tf.reduce_mean(n, axis=2)
+        # print("ConvAttention: n shape = {}".format(n.shape))
+
         return n
