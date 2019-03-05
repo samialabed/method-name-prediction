@@ -2,10 +2,8 @@ import re
 from collections import defaultdict
 from typing import List, Dict, Tuple
 
+from data.constants import SENTENCE_START_TOKEN, SENTENCE_END_TOKEN
 from data.graph_pb2 import FeatureNode, Graph
-
-SENTENCE_START_TOKEN = '<s>'
-SENTENCE_END_TOKEN = '</s>'
 
 
 class GraphFeatureExtractor(object):
