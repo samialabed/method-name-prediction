@@ -18,7 +18,7 @@ DATA_FILE_EXTENSION = 'proto'
 class PreProcessor(object):
     DEFAULT_CONFIG = {
         'vocabulary_max_size': 5000,  # the vocabulary embedding maximum size.
-        'max_chunk_length': 100,  # the maximum size of a token, smaller tokens will be padded to size.
+        'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
         'vocabulary_count_threshold': 2,  # the minimum occurrences of a token to not be considered a rare token.
         'run_name': 'default_parser',  # meaningful name of the experiment configuration.
         'min_line_of_codes': 3,  # minimum line of codes the method should contain to be considered in the corpus.
