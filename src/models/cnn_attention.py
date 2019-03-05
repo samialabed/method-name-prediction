@@ -2,7 +2,7 @@ from typing import Dict
 
 from tensorflow.python import keras, Tensor
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.layers import Embedding, GRU, Dense, TimeDistributed, Masking
+from tensorflow.python.keras.layers import Embedding, GRU, TimeDistributed, Softmax
 
 from models.attention import AttentionFeatures, AttentionWeights
 
@@ -33,23 +33,32 @@ class ConvAttention(keras.Model):
                                          embedding_dim,
                                          input_length=max_chunk_length,
                                          name='cnn_att_embedding')
-        self.gru_layer = TimeDistributed(GRU(k2, return_state=True, return_sequences=True, name='cnn_att_gru'))
+        self.gru_layer = TimeDistributed(GRU(k2,
+                                             return_state=True,
+                                             return_sequences=True,
+                                             # recurrent_dropout=dropout_rate,
+                                             name='cnn_att_gru'))
         self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate)
         self.attention_weights_layer = AttentionWeights(w3, dropout_rate)
         # dense layer: E * n_t + bias, mapped to probability of words embedding
-        self.dense_layer = TimeDistributed(Dense(vocabulary_size, activation='softmax', name='cnn_att_dense'))
+        self.bias = self.add_weight(name='bias',
+                                    shape=[vocabulary_size, ],
+                                    initializer='zeros',
+                                    trainable=True)
+        self.softmax_layer = TimeDistributed(Softmax())
+        # self.dense_layer = TimeDistributed(Dense(vocabulary_size, activation='softmax', name='cnn_att_dense'))
 
     def call(self, code_block: Tensor, training=False, **kwargs):
         # Note: all layers are wrapped with TimeDistributed, thus the shapes have number of
         # [batch size, timesteps (max chunk size), features (1 the subtoken value), Etc]
-        # each subtoken is considered a timestep 
+        # each subtoken is considered a timestep
 
         # create a mask of the padding sequence of the input
         mask_vector = K.cast(K.equal(code_block, 0), dtype='float32') * -1e7
         # mask_vector [batch size, max chunk length, 1]
         print("ConvAttention: mask_vector shape = {}".format(mask_vector.shape))
 
-        code_block = Masking(mask_value=0,)(code_block)
+        # code_block = Masking(mask_value=0, )(code_block)
         tokens_embedding = self.embedding_layer(code_block)
         print("ConvAttention: Tokens shape = {}".format(tokens_embedding.shape))
         # tokens_embedding = [batch_size, max chunk length, embedding_dim]
@@ -70,8 +79,19 @@ class ConvAttention(keras.Model):
         print("ConvAttention: n_hat shape = {}".format(n_hat.shape))
         # n_hat = [batch size, embedding dim]
 
-        # matrix multiply n_hat (the embeddings with attention weights applied) and the embeddings
-        n = self.dense_layer(K.squeeze(K.batch_dot(tokens_embedding, K.expand_dims(n_hat, axis=-1)), axis=-1))
+        # embedding over all vocabulary
+        E = self.embedding_layer.embeddings
+        print("ConvAttention: E shape = {}".format(E.shape))
+        # E = [vocabulary size, embedding dim]
+
+        # Apply attention to the words over all embeddings
+        n_hat_E = K.nn.math_ops.tensordot(E, K.transpose(n_hat), axes=[[1], [0]])
+        # n_hat_E = [vocabulary size, max chunk size, batch size]
+        n_hat_E = K.permute_dimensions(n_hat_E, [2, 1, 0])
+        print("ConvAttention: n_hat_E shape = {}".format(n_hat_E.shape))
+        # n_hat_E = [batch size, max chunk size, vocabulary size]
+
+        n = self.softmax_layer(K.bias_add(n_hat_E, self.bias))
         print("ConvAttention: n shape = {}".format(n.shape))
         # n = [batch size, vocabulary size] the probability of each token in the vocabulary
 
