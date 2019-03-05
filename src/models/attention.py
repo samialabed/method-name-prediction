@@ -1,7 +1,9 @@
 from typing import List
 
-import tensorflow as tf
+from tensorflow import Tensor
 from tensorflow.python.keras import backend, layers, models
+from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.layers import Lambda, Dropout, Conv1D, Softmax, TimeDistributed
 
 """
 Attention features and weight as defined in [1] (page 3)
@@ -39,28 +41,28 @@ class AttentionFeatures(models.Model):
         # Use 1D convolutions as input is text.
         # create k1 filters, each of window size of w1, the output is k1 different convolutions.
         # causal padding to ensure the conv keep the size of the input throughout
-        self.conv1 = layers.Conv1D(k1, w1, activation='relu', padding='causal', name='attention_fet_conv1')
-        self.conv2 = layers.Conv1D(k2, w2, padding='causal', name='attention_fet_conv2')
-        self.dropout = layers.Dropout(dropout_rate)
-        self.l2_norm = layers.Lambda(lambda x: backend.l2_normalize(x, axis=1), name='attention_fet_l2_norm')
-        self.multiply_layer = layers.Multiply(name='attention_fet_mul')
+        # Keras requires the input to be the same size as the output
+        self.conv1 = TimeDistributed(Conv1D(k1, w1, activation='relu', padding='causal', name='attention_fet_conv1'))
+        self.conv2 = TimeDistributed(Conv1D(k2, w2, padding='causal', name='attention_fet_conv2'))
+        self.dropout = Dropout(dropout_rate)
+        self.l2_norm = Lambda(lambda x: backend.l2_normalize(x, axis=1), name='attention_fet_l2_norm')
 
-    def call(self, inputs: List[tf.Tensor], training=False, **kwargs):
+    def call(self, inputs: List[Tensor], training=False, **kwargs):
         C, h_t = inputs  # C is code_tokens, h_t is the previous hidden state
         print("AttentionFeatures: C shape = {}, h_t shape = {}".format(C.shape, h_t.shape))
-        # C = [batch size, body len (max chunk size), emb dim]
+        # C = [batch size, max chunk size, emb dim]
         # h_t = [batch size, k2]
 
         L_1 = self.conv1(C)
         print("AttentionFeatures: L_1 shape = {}".format(L_1.shape))
-        # L_1 = [batch size, body len, k1]
+        # L_1 = [batch size, max chunk size, k1]
         L_1 = self.dropout(L_1, training=training)
         L_2 = self.conv2(L_1)
         print("AttentionFeatures: L_2 shape = {}".format(L_2.shape))
         # elementwise multiplication with h_t to keep only relevant features (acting like a gating-like mechanism)
-        L_2 = self.multiply_layer([L_2, h_t])
+        L_2 = layers.Multiply(name='attention_fet_l2_mul')([L_2, h_t])
 
-        # L_2 = [batch size, k2, body len - w1 - w2 + 2]
+        # L_2 = [batch size, max chunk size, k2]
         print("AttentionFeatures: L_2 shape  after multiply = {}".format(L_2.shape))
         L_2 = self.dropout(L_2, training=training)
         # perform L2 normalisation
@@ -80,22 +82,22 @@ class AttentionWeights(models.Model):
     def __init__(self, w3, dropout_rate):
         # w3 are the window sizes of the convolutions, hyperparameters
         super().__init__()
-        self.conv1 = layers.Conv1D(1, w3, activation=None, padding='causal', use_bias=True,
-                                   name='attention_weight_conv1')
-        self.dropout = layers.Dropout(dropout_rate)
-        self.softmax = layers.Softmax()
+        self.conv1 = TimeDistributed(
+            Conv1D(1, w3, activation=None, padding='causal', use_bias=True, name='atn_weight_conv1'))
+        self.dropout = Dropout(dropout_rate)
+        self.softmax = Softmax(name='atn_weight_softmax')
 
-    def call(self, l_feat_and_input_mask: List[tf.Tensor], training=False, **kwargs):
+    def call(self, l_feat_and_input_mask: List[Tensor], training=False, **kwargs):
         l_feat, mask = l_feat_and_input_mask
         print("AttentionWeights: l_feat shape = {}".format(l_feat.shape))
 
         attention_weight = self.conv1(l_feat)
         print("AttentionWeights: attention_weight shape = {}".format(attention_weight.shape))
-        # L_1 = [batch size, k1, bodies len - w1 + 1]
+        # attention_weight = [batch size, max chunk size, 1]
         attention_weight = self.dropout(attention_weight, training=training)
-
-        attention_weight = tf.squeeze(attention_weight, axis=-1) + (mask * -1e7)  # Give less weights to masked value
-
+        # Give less weights to masked value
+        attention_weight = K.squeeze(attention_weight, axis=-1) + mask  # Give less weights to masked value
         attention_weight = self.softmax(attention_weight)
+        # attention_weight = [batch size, max chunk size] - what to focus on in the body
 
         return attention_weight

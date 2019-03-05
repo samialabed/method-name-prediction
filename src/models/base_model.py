@@ -23,7 +23,7 @@ class BaseModel(Model):
         """
         return load_model('{}/model.h5'.format(path))
 
-    def save_everything(self, filepath) -> None:
+    def save(self, filepath, overwrite=True, include_optimizer=True) -> None:
         self.model.save_weights(filepath)
         model_type = type(self).__name__
         model_config_to_save = {
