@@ -29,10 +29,11 @@ class ConvAttention(keras.Model):
         w3 = hyperparameters['w3']
         k1 = hyperparameters['k1']
         k2 = hyperparameters['k2']
-        self.embedding_layer = Embedding(vocabulary_size,
-                                         embedding_dim,
-                                         input_length=max_chunk_length,
-                                         name='cnn_att_embedding')
+        self.embedding_layer = TimeDistributed(Embedding(vocabulary_size,
+                                                         embedding_dim,
+                                                         mask_zero=True,
+                                                         input_length=max_chunk_length,
+                                                         name='cnn_att_embedding'))
         self.gru_layer = TimeDistributed(GRU(k2,
                                              return_state=True,
                                              return_sequences=True,
@@ -80,7 +81,7 @@ class ConvAttention(keras.Model):
         # n_hat = [batch size, embedding dim]
 
         # embedding over all vocabulary
-        E = self.embedding_layer.embeddings
+        E = self.embedding_layer.layer.embeddings
         print("ConvAttention: E shape = {}".format(E.shape))
         # E = [vocabulary size, embedding dim]
 
