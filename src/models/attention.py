@@ -3,7 +3,7 @@ from typing import List
 from tensorflow import Tensor
 from tensorflow.python.keras import backend, layers, models
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.layers import Lambda, Dropout, Conv1D, Softmax
+from tensorflow.python.keras.layers import Lambda, Dropout, Conv1D, Softmax, TimeDistributed
 
 """
 Attention features and weight as defined in [1] (page 3)
@@ -42,8 +42,8 @@ class AttentionFeatures(models.Model):
         # create k1 filters, each of window size of w1, the output is k1 different convolutions.
         # causal padding to ensure the conv keep the size of the input throughout
         # Keras requires the input to be the same size as the output
-        self.conv1 = Conv1D(k1, w1, activation='relu', padding='causal', name='attention_fet_conv1')
-        self.conv2 = Conv1D(k2, w2, padding='causal', name='attention_fet_conv2')
+        self.conv1 = TimeDistributed(Conv1D(k1, w1, activation='relu', padding='causal', name='attention_fet_conv1'))
+        self.conv2 = TimeDistributed(Conv1D(k2, w2, padding='causal', name='attention_fet_conv2'))
         self.dropout = Dropout(dropout_rate)
         self.l2_norm = Lambda(lambda x: backend.l2_normalize(x, axis=1), name='attention_fet_l2_norm')
 
@@ -82,7 +82,8 @@ class AttentionWeights(models.Model):
     def __init__(self, w3, dropout_rate):
         # w3 are the window sizes of the convolutions, hyperparameters
         super().__init__()
-        self.conv1 = Conv1D(1, w3, activation=None, padding='causal', use_bias=True, name='atn_weight_conv1')
+        self.conv1 = TimeDistributed(
+            Conv1D(1, w3, activation=None, padding='causal', use_bias=True, name='atn_weight_conv1'))
         self.dropout = Dropout(dropout_rate)
         self.softmax = Softmax(name='atn_weight_softmax')
 

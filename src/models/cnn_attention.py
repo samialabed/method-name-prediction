@@ -2,7 +2,7 @@ from typing import Dict
 
 from tensorflow.python import keras, Tensor
 from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.layers import Embedding, GRU, Dense
+from tensorflow.python.keras.layers import Embedding, GRU, Dense, TimeDistributed, Masking
 
 from models.attention import AttentionFeatures, AttentionWeights
 
@@ -29,27 +29,34 @@ class ConvAttention(keras.Model):
         w3 = hyperparameters['w3']
         k1 = hyperparameters['k1']
         k2 = hyperparameters['k2']
-
         self.embedding_layer = Embedding(vocabulary_size,
                                          embedding_dim,
                                          input_length=max_chunk_length,
                                          name='cnn_att_embedding')
-        self.gru_layer = GRU(k2, return_state=True, return_sequences=True, name='cnn_att_gru')
+        self.gru_layer = TimeDistributed(GRU(k2, return_state=True, return_sequences=True, name='cnn_att_gru'))
         self.attention_feature_layer = AttentionFeatures(k1, w1, k2, w2, dropout_rate)
         self.attention_weights_layer = AttentionWeights(w3, dropout_rate)
         # dense layer: E * n_t + bias, mapped to probability of words embedding
-        self.dense_layer = Dense(vocabulary_size, activation='softmax', name='cnn_att_dense')
+        self.dense_layer = TimeDistributed(Dense(vocabulary_size, activation='softmax', name='cnn_att_dense'))
 
     def call(self, code_block: Tensor, training=False, **kwargs):
+        # Note: all layers are wrapped with TimeDistributed, thus the shapes have number of
+        # [batch size, timesteps (max chunk size), features (1 the subtoken value), Etc]
+        # each subtoken is considered a timestep 
+
         # create a mask of the padding sequence of the input
         mask_vector = K.cast(K.equal(code_block, 0), dtype='float32') * -1e7
-        # mask_vector [batch size, max chunk length]
+        # mask_vector [batch size, max chunk length, 1]
+        print("ConvAttention: mask_vector shape = {}".format(mask_vector.shape))
 
+        code_block = Masking(mask_value=0,)(code_block)
         tokens_embedding = self.embedding_layer(code_block)
+        print("ConvAttention: Tokens shape = {}".format(tokens_embedding.shape))
         # tokens_embedding = [batch_size, max chunk length, embedding_dim]
+
         _, h_t = self.gru_layer(tokens_embedding, training=training)
         # h_t = [batch_size, k2)
-        print("ConvAttention: Tokens shape = {}, h_t shape = {}".format(tokens_embedding.shape, h_t.shape))
+        print("ConvAttention: h_t shape = {}".format(h_t.shape))
         l_feat = self.attention_feature_layer([tokens_embedding, h_t])
         print("ConvAttention: L_feat shape = {}".format(l_feat.shape))
 
