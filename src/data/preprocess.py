@@ -15,17 +15,39 @@ LoadedSamples = Dict[str, np.ndarray]
 DATA_FILE_EXTENSION = 'proto'
 
 
+def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None) -> List[str]:
+    files = iglob(os.path.join(data_dir, '**/*.{}'.format(DATA_FILE_EXTENSION)), recursive=True)
+
+    # Skip tests and exception classes
+    if skip_tests:
+        files = filter(
+            lambda file: not file.endswith(("Test.java.proto",
+                                            "TestCase.java.proto",
+                                            "Exception.java.proto",
+                                            "Testing.java.proto",
+                                            "Tests.java.proto",
+                                            "IT.java.proto",
+                                            "Interface.java.proto"
+                                            )),
+            files)
+    if max_num_files:
+        files = sorted(files)[:int(max_num_files)]
+    else:
+        files = list(files)
+    np.random.shuffle(files)
+    return np.array(files)
+
+
 class PreProcessor(object):
     DEFAULT_CONFIG = {
         'vocabulary_max_size': 5000,  # the vocabulary embedding maximum size.
         'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
-        'vocabulary_count_threshold': 2,  # the minimum occurrences of a token to not be considered a rare token.
+        'vocabulary_count_threshold': 3,  # the minimum occurrences of a token to not be considered a rare token.
         'run_name': 'default_parser',  # meaningful name of the experiment configuration.
         'min_line_of_codes': 3,  # minimum line of codes the method should contain to be considered in the corpus.
-        'skip_tests': True  # skip files that contain test
     }
 
-    def __init__(self, config: Dict[str, Any], data_dir: str = 'data/raw/r252-corpus-features/',
+    def __init__(self, config: Dict[str, Any], data_files: List[str],
                  max_num_files: int = None, metadata: Dict[str, Any] = None):
         """
         :param config: dictionary containing parsers configs and vocabulary size.
@@ -36,10 +58,9 @@ class PreProcessor(object):
         if config is None:
             config = self.DEFAULT_CONFIG
         self.config = config
-        self.data_dir = data_dir
         self.logger = logging.getLogger(__name__)
         self.max_num_files = max_num_files
-        self.data_files = self.load_data_files_from_directory()
+        self.data_files = data_files
         self.corpus_methods_token = self.get_tokens_from_dir()
         if metadata is None:
             metadata = self.load_metadata()
@@ -104,21 +125,6 @@ class PreProcessor(object):
         """ Returns a list of all tokens in the data files. """
         return [methods_token for file in self.data_files for methods_token in self.load_data_file(file)]
 
-    def load_data_files_from_directory(self) -> List[str]:
-        files = iglob(os.path.join(self.data_dir, '**/*.{}'.format(DATA_FILE_EXTENSION)), recursive=True)
-
-        # Skip tests and exception classes
-        if self.config['skip_tests']:
-            files = filter(
-                lambda file: not file.endswith(("Test.java.proto", "TestCase.java.proto", "Exception.java.proto")),
-                files)
-        if self.max_num_files:
-            files = sorted(files)[:int(self.max_num_files)]
-        else:
-            files = list(files)
-        np.random.shuffle(files)
-        return files
-
     def load_data_file(self, path: str) -> Iterable[List[NameBodyTokens]]:
         """
         Load a single data file, returning token streams.
@@ -136,8 +142,3 @@ class PreProcessor(object):
         # TODO separate this into multiple exceptions and use it to skip tests and others files
         except Exception as e:
             print("Failed to load data from path: {}. Exception: {}".format(path, e))
-
-
-if __name__ == '__main__':
-    data = PreProcessor(config=PreProcessor.DEFAULT_CONFIG,
-                        data_dir='data/raw/r252-corpus-features/org/elasticsearch/action/admin/cluster/allocation/')
