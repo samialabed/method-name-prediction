@@ -31,19 +31,19 @@ class AttentionFeatures(models.Model):
     def call(self, inputs: List[Tensor], training=False, **kwargs):
         C, h_t = inputs  # C is code_tokens, h_t is the previous hidden state
         self.logger.info("C shape = {}, h_t shape = {}".format(C.shape, h_t.shape))
-        # C = [batch size, max chunk size, emb dim]
+        # C = [batch size, token length, emb dim]
         # h_t = [batch size, k2], represents information from the previous subtokens m0 . . . mt−1
 
         L_1 = self.conv1(C)
         self.logger.info("L_1 shape = {}".format(L_1.shape))
-        # L_1 = [batch size, max chunk size, k1]
+        # L_1 = [batch size, token length, k1]
         L_1 = self.dropout(L_1, training=training)
         L_2 = self.conv2(L_1)
         self.logger.info("L_2 shape = {}".format(L_2.shape))
         # elementwise multiplication with h_t to keep only relevant features (acting like a gating-like mechanism)
         L_2 = layers.Multiply(name='attention_fet_l2_mul')([L_2, h_t])
 
-        # L_2 = [batch size, max chunk size, k2]
+        # L_2 = [batch size, token length, k2]
         self.logger.info("L_2 shape  after multiply = {}".format(L_2.shape))
         L_2 = self.dropout(L_2, training=training)
         # perform L2 normalisation
@@ -74,11 +74,11 @@ class AttentionWeights(models.Model):
 
         attention_weight = self.conv1(l_feat)
         self.logger.info("attention_weight shape = {}".format(attention_weight.shape))
-        # attention_weight = [batch size, max chunk size, 1]
+        # attention_weight = [batch size, token length, 1]
         attention_weight = self.dropout(attention_weight, training=training)
         # Give less weights to masked value
         attention_weight = K.squeeze(attention_weight, axis=-1) + mask  # Give less weights to masked value
         attention_weight = self.softmax(attention_weight)
-        # attention_weight = [batch size, max chunk size] - what to focus on in the body
+        # attention_weight = [batch size, token length] - what to focus on in the body
 
         return attention_weight

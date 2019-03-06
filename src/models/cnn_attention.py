@@ -52,49 +52,49 @@ class ConvAttention(keras.Model):
 
     def call(self, code_block: Tensor, training=False, **kwargs):
         # Note: all layers are wrapped with TimeDistributed, thus the shapes have number of
-        # [batch size, timesteps (max chunk size), features (1 the subtoken value), Etc]
+        # [batch size, timesteps (token length), features (1 the subtoken value), Etc]
         # each subtoken is considered a timestep
 
         # create a mask of the padding sequence of the input
         mask_vector = K.cast(K.equal(code_block, 0), dtype='float32') * -1e7
         # mask_vector [batch size, max chunk length, 1]
-        self.logger.info("ConvAttention: mask_vector shape = {}".format(mask_vector.shape))
+        self.logger.info("mask_vector shape = {}".format(mask_vector.shape))
 
         # code_block = Masking(mask_value=0, )(code_block)
         tokens_embedding = self.embedding_layer(code_block)
-        self.logger.info("ConvAttention: Tokens shape = {}".format(tokens_embedding.shape))
+        self.logger.info("Tokens shape = {}".format(tokens_embedding.shape))
         # tokens_embedding = [batch_size, max chunk length, embedding_dim]
 
         _, h_t = self.gru_layer(tokens_embedding, training=training)
         # h_t = [batch_size, k2)
-        self.logger.info("ConvAttention: h_t shape = {}".format(h_t.shape))
+        self.logger.info("h_t shape = {}".format(h_t.shape))
         l_feat = self.attention_feature_layer([tokens_embedding, h_t])
-        self.logger.info("ConvAttention: L_feat shape = {}".format(l_feat.shape))
+        self.logger.info("L_feat shape = {}".format(l_feat.shape))
 
-        # L_feat = [batch size, max chunk size, k2]
+        # L_feat = [batch size, token length, k2]
         alpha = self.attention_weights_layer([l_feat, mask_vector])
-        self.logger.info("ConvAttention: alpha shape = {}".format(alpha.shape))
-        # alpha = [batch size, max chunk size] weights over embeddings
+        self.logger.info("alpha shape = {}".format(alpha.shape))
+        # alpha = [batch size, token length] weights over embeddings
 
         # apply the attention to the input embedding
         n_hat = K.sum((K.expand_dims(alpha, axis=-1) * tokens_embedding), axis=1)
-        self.logger.info("ConvAttention: n_hat shape = {}".format(n_hat.shape))
+        self.logger.info("n_hat shape = {}".format(n_hat.shape))
         # n_hat = [batch size, embedding dim]
 
         # embedding over all vocabulary
         E = self.embedding_layer.layer.embeddings
-        self.logger.info("ConvAttention: E shape = {}".format(E.shape))
+        self.logger.info("E shape = {}".format(E.shape))
         # E = [vocabulary size, embedding dim]
 
         # Apply attention to the words over all embeddings
         n_hat_E = K.nn.math_ops.tensordot(E, K.transpose(n_hat), axes=[[1], [0]])
-        # n_hat_E = [vocabulary size, max chunk size, batch size]
+        # n_hat_E = [vocabulary size, token length, batch size]
         n_hat_E = K.permute_dimensions(n_hat_E, [2, 1, 0])
-        self.logger.info("ConvAttention: n_hat_E shape = {}".format(n_hat_E.shape))
-        # n_hat_E = [batch size, max chunk size, vocabulary size]
+        self.logger.info("n_hat_E shape = {}".format(n_hat_E.shape))
+        # n_hat_E = [batch size, token length, vocabulary size]
 
         n = self.softmax_layer(K.bias_add(n_hat_E, self.bias))
-        self.logger.info("ConvAttention: n shape = {}".format(n.shape))
+        self.logger.info("n shape = {}".format(n.shape))
         # n = [batch size, vocabulary size] the probability of each token in the vocabulary
 
         return n
