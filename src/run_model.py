@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 """
 Usage:
     train.py [options] DATA_DIR PATH_TO_CONFIG_FILE
