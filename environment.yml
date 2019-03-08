@@ -4,11 +4,11 @@ dependencies:
  - numpy
  - tensorflow
  - docopt
- - keras
  - urllib3
  - jupyter
  - pydot
  - graphviz
+ - sklearn
  - pip:
    - dpu-utils
    - more_itertools

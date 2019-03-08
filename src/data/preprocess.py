@@ -39,24 +39,21 @@ def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None)
 
 
 class PreProcessor(object):
-    DEFAULT_CONFIG = {
-        'vocabulary_max_size': 5000,  # the vocabulary embedding maximum size.
-        'max_chunk_length': 50,  # the maximum size of a token, smaller tokens will be padded to size.
-        'vocabulary_count_threshold': 3,  # the minimum occurrences of a token to not be considered a rare token.
-        'run_name': 'default_parser',  # meaningful name of the experiment configuration.
-        'min_line_of_codes': 3,  # minimum line of codes the method should contain to be considered in the corpus.
-    }
 
     def __init__(self, config: Dict[str, Any], data_files: List[str],
                  max_num_files: int = None, metadata: Dict[str, Any] = None):
         """
         :param config: dictionary containing parsers configs and vocabulary size.
+            DEFAULT_CONFIG = {
+            'vocabulary_max_size':  the vocabulary embedding maximum size.
+            'max_chunk_length': the maximum size of a token, smaller tokens will be padded to size.
+            'vocabulary_count_threshold': the minimum occurrences of a token to not be considered a rare token.
+            'min_line_of_codes':  minimum line of codes the method should contain to be considered in the corpus.
+        }
         :param data_dir: path to data input directory
         :param max_num_files: Maximal number of files to load.
         :param metadata: (Optional) metadata about the corpus, holds vocabulary. This is useful for test dataset.
         """
-        if config is None:
-            config = self.DEFAULT_CONFIG
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.max_num_files = max_num_files

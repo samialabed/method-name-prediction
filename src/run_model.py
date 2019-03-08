@@ -1,84 +1,111 @@
 # !/usr/bin/env python
 """
 Usage:
-    train.py [options] SAVE_DIR TRAIN_DATA_DIR VALID_DATA_DIR
+    train.py [options] DATA_DIR PATH_TO_CONFIG_FILE
 
-*_DATA_DIR are directories filled with files that we use as data.
+*DATA_DIR directory filled with data with corpus extracted into .proto
+*PATH_TO_CONFIG_FILE file for the model see configs/example-config.json for example
 
 Options:
     -h --help                        Show this screen.
-    --max-num-epochs EPOCHS          The maximum number of epochs to run [default: 300]
-    --max-num-files INT              Number of files to load.
-    --hypers-override HYPERS         JSON dictionary overriding hyperparameter values.
-    --run-name NAME                  Picks a name for the trained model.
     --debug                          Enable debug routines. [default: False]
-
- - TODO take config file for hyperparameter
- - TODO copy config file to experiments directory/<name of the run>/<date>/config
- - TODO take name of the algorithm to run as arg
- - TODO train and test splitting
- 
 """
 import json
-import os
-import time
-from typing import Dict, Any, Optional
+from typing import Dict
 
 from docopt import docopt
 from dpu_utils.utils import run_and_debug
+from sklearn.model_selection import train_test_split
+
+from data.preprocess import get_data_files_from_directory, PreProcessor
+from models.complete_model import run_cnn_attention_model
 
 
-def run_train(train_data_dir: str,
-              valid_data_dir: str,
-              save_dir: str,
-              hyperparameters: Dict[str, Any],
-              max_num_files: Optional[int] = None,
-              parallelize: bool = True) \
-        -> None:
-    model = Model(hyperparameters, model_save_dir=save_dir)
+def assert_hyperparameters(hyperparameters: Dict[str, any]):
+    if 'run_name' not in hyperparameters:
+        raise ValueError("No run_name given")
 
-    model.load_metadata_from_dir(train_data_dir, max_num_files=max_num_files)
-    print("Loaded metadata for model: ")
-    for key, value in model.metadata.items():
-        print("  % 20s: %s" % (key, str(value)[:60]))
+    if 'model_type' not in hyperparameters:
+        raise ValueError("No model_type given")
 
-    train_data = model.load_data_from_dir(train_data_dir, max_num_files=max_num_files)
-    print('Training on %i samples.' % len(train_data['tokens']))
-    valid_data = model.load_data_from_dir(valid_data_dir, max_num_files=max_num_files)
-    print('Validating on %i samples.' % len(valid_data['tokens']))
+    if 'model_hyperparameters' not in hyperparameters:
+        raise ValueError("No model_hyperparameters given")
 
-    model.init()
-    model.train(train_data, valid_data)
+    # verify model hyperparameters
+    model_hyperparameters = hyperparameters['model_hyperparameters']
+    if 'epochs' not in model_hyperparameters:
+        raise ValueError("No epochs were given in model_hyperparameters given")
+    if 'batch_size' not in model_hyperparameters:
+        raise ValueError("No batch_size were given in model_hyperparameters given")
+    if 'max_chunk_length' not in model_hyperparameters:
+        raise ValueError("No max_chunk_length were given in model_hyperparameters given")
 
+    # verify beam search hyperparameters
+    if 'beam_search_config' not in hyperparameters:
+        raise ValueError("No beam_search_config were given")
+    beam_search_config = hyperparameters['beam_search_config']
+    if 'beam_width' not in beam_search_config:
+        raise ValueError("No beam_width were given in beam_search_config given")
+    if 'beam_top_paths' not in beam_search_config:
+        raise ValueError("No beam_top_paths were given in beam_search_config given")
 
-def make_run_id(arguments: Dict[str, Any]) -> str:
-    """Choose a run ID, based on the --run-name parameter and the current time."""
-    user_save_name = arguments.get('--run-name')
-    if user_save_name is not None:
-        user_save_name = user_save_name[:-len('.pkl')] if user_save_name.endswith('.pkl') else user_save_name
-        return "%s" % (user_save_name)
-    else:
-        return "RNNModel-%s" % (time.strftime("%Y-%m-%d-%H-%M-%S"))
+    # verify preprocessor hyperparameters
+    if 'preprocessor_config' not in hyperparameters:
+        raise ValueError("No preprocessor_config were given")
+    preprocessor_config = hyperparameters['preprocessor_config']
+    if 'vocabulary_max_size' not in preprocessor_config:
+        raise ValueError("No vocabulary_max_size were given in preprocessor_config given")
+    if 'max_chunk_length' not in preprocessor_config:
+        raise ValueError("No max_chunk_length were given in preprocessor_config given")
+    if 'vocabulary_count_threshold' not in preprocessor_config:
+        raise ValueError("No vocabulary_count_threshold were given in preprocessor_config given")
+    if 'min_line_of_codes' not in preprocessor_config:
+        raise ValueError("No min_line_of_codes were given in preprocessor_config given")
+    if 'skip_tests' not in preprocessor_config:
+        raise ValueError("No skip_tests were given in preprocessor_config given")
+
+    if model_hyperparameters['max_chunk_length'] != preprocessor_config['max_chunk_length']:
+        raise ValueError("max_chunk_length differs in model_hyperparameters from preprocessor_config")
 
 
 def run(arguments) -> None:
-    hyperparameters = Model.get_default_hyperparameters()
-    hyperparameters['run_id'] = make_run_id(arguments)
-    hyperparameters['max_epochs'] = int(arguments.get('--max-num-epochs'))
+    config_file_path = arguments['PATH_TO_CONFIG_FILE']
+    input_data_dir = arguments['DATA_DIR']
 
-    # override hyperparams if flag is passed
-    hypers_override = arguments.get('--hypers-override')
-    if hypers_override is not None:
-        hyperparameters.update(json.loads(hypers_override))
+    with open(config_file_path, 'r') as fp:
+        hyperparameters = json.load(fp)
+    assert_hyperparameters(hyperparameters)
 
-    save_model_dir = args['SAVE_DIR']
-    os.makedirs(save_model_dir, exist_ok=True)
+    # preprocess the data files
+    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir)
 
-    run_train(arguments['TRAIN_DATA_DIR'],
-              arguments['VALID_DATA_DIR'],
-              save_model_dir,
-              hyperparameters,
-              max_num_files=arguments.get('--max-num-files'))
+    # TODO make this a python magic?
+    if 'cnn_attention' in hyperparameters['model_type']:
+        run_cnn_attention_model(hyperparameters, datasets_preprocessors)
+
+
+def load_train_test_validate_dataset(hyperparameters: Dict[str, any], input_data_dir: str) -> Dict[str, PreProcessor]:
+    preprocessor_hyperparameters = hyperparameters['preprocessor_config']
+    all_files = get_data_files_from_directory(input_data_dir,
+                                              skip_tests=preprocessor_hyperparameters['skip_tests'])
+    print("Total # files: {}".format(len(all_files)))
+    train_data_files, test_data_files = train_test_split(all_files, train_size=0.7)
+    train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9)
+    print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
+                                                                            len(test_data_files),
+                                                                            len(validate_data_files)))
+    training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
+                                                 data_files=train_data_files)
+    validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
+                                                   data_files=validate_data_files,
+                                                   metadata=training_dataset_preprocessor.metadata)
+    testing_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
+                                                data_files=test_data_files,
+                                                metadata=training_dataset_preprocessor.metadata)
+
+    return {'training_dataset_preprocessor': training_dataset_preprocessor,
+            'validating_dataset_preprocessor': validating_dataset_preprocessor,
+            'testing_dataset_preprocessor': testing_dataset_preprocessor}
 
 
 if __name__ == '__main__':
