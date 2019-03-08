@@ -2,15 +2,15 @@ name: method-name-prediction
 dependencies: 
  - python=3.6.8
  - numpy
- - tensorflow
+ - tensorflow-gpu
  - docopt
  - urllib3
  - jupyter
  - pydot
  - graphviz
- - sklearn
  - pip:
    - dpu-utils
+   - sklearn
    - more_itertools
    - watermark
    - jupyter_tensorboard
