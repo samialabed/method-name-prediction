@@ -15,7 +15,7 @@ LoadedSamples = Dict[str, np.ndarray]
 DATA_FILE_EXTENSION = 'proto'
 
 
-def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None) -> np.ndarray[str]:
+def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None) -> np.ndarray:
     files = iglob(os.path.join(data_dir, '**/*.{}'.format(DATA_FILE_EXTENSION)), recursive=True)
 
     # Skip tests and exception classes

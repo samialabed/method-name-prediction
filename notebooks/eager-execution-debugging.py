@@ -4,7 +4,6 @@ from tensorflow.python import keras
 from tensorflow.python.keras import layers
 
 from data.preprocess import PreProcessor
-from data.utils import predict_name
 from models.cnn_attention import ConvAttention
 
 tf.enable_eager_execution()
