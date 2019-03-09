@@ -29,6 +29,9 @@ class CnnAttentionModel(object):
         self.model = self._compile_cnn_attention_model()
 
         if trained_model_path:
+            self.directory = trained_model_path
+            self.model.load_weights("{}/weights-final.hdf5".format(self.directory))
+        else:
             self.directory = "trained_models/{}/{}/{}".format(hyperparameters['model_type'],
                                                               hyperparameters['run_name'],
                                                               time.strftime("%Y-%m-%d-%H-%M"))
@@ -39,10 +42,6 @@ class CnnAttentionModel(object):
                 json.dump(hyperparameters, fp)
 
             self._train_cnn_attention_model()
-
-        else:
-            self.directory = trained_model_path
-            self.model.load_weights("{}/weights-final.hdf5".format(self.directory))
 
     def evaluate_f1(self):
         # testing loop
