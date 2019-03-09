@@ -50,9 +50,10 @@ def beam_search(predictions: np.ndarray, y: np.ndarray,
                                        start_sentence_token_id,
                                        end_sentence_token_id) for pred in beam_search_single_result)
                         for beam_search_single_result in beam_search_predictions_evaluated]
-
+    del beam_search_predictions_evaluated  # freeup much needed memory
     top_paths_predictions: np.ndarray = K.batch_get_value(beam_search_probs_list)
     best_predictions_probs = list(map(lambda pred: np.exp(pred[0]), top_paths_predictions))
+    del top_paths_predictions  # freeup much needed memory
     print("beam search ended for one iteration in {}ms".format(time.time() - start_time))
     return best_predictions, best_predictions_probs
 
