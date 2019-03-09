@@ -7,29 +7,44 @@ from scipy.integrate import simps
 from tensorflow.python import keras
 
 from data.constants import SENTENCE_END_TOKEN, SENTENCE_START_TOKEN
-from utils.data_utils import beam_search, clean_target_from_padding
+from utils.data_utils import beam_search, clean_target_from_padding, visualise_beam_predictions_to_targets
 
 
-def evaluate_f1(model: keras.Model, vocab: Vocabulary, x: np.ndarray, y: np.ndarray, hyperparameter: Dict[str, any]):
-    if x.ndim != 3:
+def evaluate_f1(model: keras.Model,
+                vocab: Vocabulary,
+                input_method_body_subtokens: np.ndarray,
+                target_method_names: np.ndarray,
+                hyperparameters: Dict[str, any],
+                visualise_prediction=True):
+    if input_method_body_subtokens.ndim != 3:
         # model prediction expects 3 dimensions, a single input won't have the batch dimension, manually add it
-        x = np.expand_dims(x, 0)
+        input_method_body_subtokens = np.expand_dims(input_method_body_subtokens, 0)
 
-    predictions = model.predict(x)
+    predictions = model.predict(input_method_body_subtokens)
 
     padding_id = vocab.get_id_or_unk(vocab.get_pad())
     begin_of_sentence_id = vocab.get_id_or_unk(SENTENCE_START_TOKEN)
     end_of_sentence_id = vocab.get_id_or_unk(SENTENCE_END_TOKEN)
 
-    best_predictions, best_predictions_probs = beam_search(predictions, y,
+    best_predictions, best_predictions_probs = beam_search(predictions, target_method_names,
                                                            padding_id,
                                                            begin_of_sentence_id,
                                                            end_of_sentence_id,
-                                                           hyperparameter['beam_width'],
-                                                           hyperparameter['beam_top_paths'],
+                                                           hyperparameters['beam_width'],
+                                                           hyperparameters['beam_top_paths'],
                                                            )
-    # return best_predictions, best_predictions_probs
-    return _evaluate_f1(best_predictions, best_predictions_probs, vocab, y)
+    f1_evaluation = _evaluate_f1(best_predictions, best_predictions_probs, vocab, target_method_names)
+    if visualise_prediction:
+        max_results = 10
+        visualised_input = visualise_beam_predictions_to_targets(vocab,
+                                                                 best_predictions[:max_results],
+                                                                 best_predictions_probs[:max_results],
+                                                                 input_method_body_subtokens[:max_results],
+                                                                 target_method_names[:max_results])
+
+        # return best_predictions, best_predictions_probs
+        return f1_evaluation, visualised_input
+    return f1_evaluation
 
 
 def _evaluate_f1(best_predictions: List[List[np.ndarray]],
@@ -59,10 +74,9 @@ def unk_acc(suggested_subtokens, real_subtokens, unk_id):
     return float(np.sum(suggested_subtokens == unk_id)) / real_unk_subtokens
 
 
-# TODO this is super hacky and probably inefficient
 class PointSuggestionEvaluator:
     """
-    This a modified version from f1_evaluator from
+    This a modified version (and hacky version) from f1_evaluator from
     https://github.com/mast-group/convolutional-attention/blob/master/convolutional_attention/f1_evaluator.py
     """
 
@@ -223,43 +237,3 @@ def token_precision_recall(predicted_parts: np.ndarray, gold_set_parts: np.ndarr
         f1 = 0.
 
     return precision, recall, f1
-
-
-def _debug_evaluator():
-    from collections import Counter
-
-    test_gold = np.array(
-        [[[10], [130], [97], [377], [74], [11], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0],
-          [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0],
-          [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]]])
-
-    test_prediction = [np.array([[[10, 130, 377, 1, 0]],
-                                 [[10, 130, 377, 0]],
-                                 [[10, 12, 377, 1, 0]],
-                                 [[10, 130, 377, 74, 0]],
-                                 [[10, 12, 377, 0]]]),
-                       np.array([[[10, 130, 377, 11, 0]],
-                                 [[10, 130, 377, 0]],
-                                 [[10, 12, 377, 11, 0]],
-                                 [[10, 130, 377, 74, 0]],
-                                 [[10, 12, 377, 0]]])]
-
-    # token_precision_recall(test_prediction, test_gold, -1)
-
-    test_prediction_prob = [np.array([-5.6808667, -5.8504624, -5.9559455, -6.125316, -6.1794915],
-                                     dtype='float32'),
-                            np.array([-3.8716054, -3.9793577, -4.3363566, -6.695883, -8.953899], dtype='float32')]
-
-    test_prediction_prob = np.exp(test_prediction_prob)
-
-    test_vocab = Vocabulary.create_vocabulary(Counter([10, 130, 377, 11, 0]),
-                                              count_threshold=0,
-                                              max_size=50,
-                                              add_unk=True,
-                                              add_pad=True)
-
-    print(_evaluate_f1(test_prediction, test_prediction_prob, test_vocab, test_gold))
-
-
-if __name__ == '__main__':
-    _debug_evaluator()

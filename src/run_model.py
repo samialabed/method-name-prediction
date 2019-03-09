@@ -9,19 +9,66 @@ Usage:
 Options:
     -h --help                        Show this screen.
     --debug                          Enable debug routines. [default: False]
+    --trained-model-path             Path to a trained model weights to load and skip training.
 """
 import json
 from typing import Dict
 
+import numpy as np
 from docopt import docopt
 from dpu_utils.utils import run_and_debug
 from sklearn.model_selection import train_test_split
 
 from data.preprocess import get_data_files_from_directory, PreProcessor
-from models.complete_model import run_cnn_attention_model
+from models.complete_models import CnnAttentionModel
+
+# for reproducibility
+np.random.seed(1)
 
 
-def assert_hyperparameters(hyperparameters: Dict[str, any]):
+def run(arguments) -> None:
+    config_file_path = arguments['PATH_TO_CONFIG_FILE']
+    input_data_dir = arguments['DATA_DIR']
+
+    with open(config_file_path, 'r') as fp:
+        hyperparameters = json.load(fp)
+    _assert_hyperparameters(hyperparameters)
+
+    # preprocess the data files
+    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir)
+
+    trained_model_path = arguments.get('--trained-model-path')
+    # TODO make this a python magic?
+    if 'cnn_attention' in hyperparameters['model_type']:
+        cnn_model = CnnAttentionModel(hyperparameters, datasets_preprocessors, trained_model_path)
+        print(cnn_model.evaluate_f1())
+
+
+def load_train_test_validate_dataset(hyperparameters: Dict[str, any], input_data_dir: str) -> Dict[str, PreProcessor]:
+    preprocessor_hyperparameters = hyperparameters['preprocessor_config']
+    all_files = get_data_files_from_directory(input_data_dir,
+                                              skip_tests=preprocessor_hyperparameters['skip_tests'])
+    print("Total # files: {}".format(len(all_files)))
+    train_data_files, test_data_files = train_test_split(all_files, train_size=0.7)
+    train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9)
+    print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
+                                                                            len(test_data_files),
+                                                                            len(validate_data_files)))
+    training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
+                                                 data_files=train_data_files)
+    validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
+                                                   data_files=validate_data_files,
+                                                   metadata=training_dataset_preprocessor.metadata)
+    testing_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
+                                                data_files=test_data_files,
+                                                metadata=training_dataset_preprocessor.metadata)
+
+    return {'training_dataset_preprocessor': training_dataset_preprocessor,
+            'validating_dataset_preprocessor': validating_dataset_preprocessor,
+            'testing_dataset_preprocessor': testing_dataset_preprocessor}
+
+
+def _assert_hyperparameters(hyperparameters: Dict[str, any]):
     if 'run_name' not in hyperparameters:
         raise ValueError("No run_name given")
 
@@ -66,46 +113,6 @@ def assert_hyperparameters(hyperparameters: Dict[str, any]):
 
     if model_hyperparameters['max_chunk_length'] != preprocessor_config['max_chunk_length']:
         raise ValueError("max_chunk_length differs in model_hyperparameters from preprocessor_config")
-
-
-def run(arguments) -> None:
-    config_file_path = arguments['PATH_TO_CONFIG_FILE']
-    input_data_dir = arguments['DATA_DIR']
-
-    with open(config_file_path, 'r') as fp:
-        hyperparameters = json.load(fp)
-    assert_hyperparameters(hyperparameters)
-
-    # preprocess the data files
-    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir)
-
-    # TODO make this a python magic?
-    if 'cnn_attention' in hyperparameters['model_type']:
-        run_cnn_attention_model(hyperparameters, datasets_preprocessors)
-
-
-def load_train_test_validate_dataset(hyperparameters: Dict[str, any], input_data_dir: str) -> Dict[str, PreProcessor]:
-    preprocessor_hyperparameters = hyperparameters['preprocessor_config']
-    all_files = get_data_files_from_directory(input_data_dir,
-                                              skip_tests=preprocessor_hyperparameters['skip_tests'])
-    print("Total # files: {}".format(len(all_files)))
-    train_data_files, test_data_files = train_test_split(all_files, train_size=0.7)
-    train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9)
-    print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
-                                                                            len(test_data_files),
-                                                                            len(validate_data_files)))
-    training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                 data_files=train_data_files)
-    validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                   data_files=validate_data_files,
-                                                   metadata=training_dataset_preprocessor.metadata)
-    testing_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                data_files=test_data_files,
-                                                metadata=training_dataset_preprocessor.metadata)
-
-    return {'training_dataset_preprocessor': training_dataset_preprocessor,
-            'validating_dataset_preprocessor': validating_dataset_preprocessor,
-            'testing_dataset_preprocessor': testing_dataset_preprocessor}
 
 
 if __name__ == '__main__':
