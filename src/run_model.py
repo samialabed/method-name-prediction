@@ -52,13 +52,13 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
     if trained_model_path:
         print("Retrieving previous pickled datafiles")
-        with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
+        with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
             train_data_files = pickle.load(f)
 
-        with open('{}/testing_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
+        with open('{}/testing_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
             test_data_files = pickle.load(f)
 
-        with open('{}/validating_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
+        with open('{}/validating_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
             validate_data_files = pickle.load(f)
 
     else:
