@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 import time
 from typing import Dict
 
@@ -40,6 +41,16 @@ class CnnAttentionModel(object):
 
             with open('{}/config.json'.format(self.directory), 'w') as fp:
                 json.dump(hyperparameters, fp)
+
+            # Save name of files to allow reproducibility
+            with open('{}/training_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
+                pickle.dump(self.preprocessors['training_dataset_preprocessor'].data_files, f)
+
+            with open('{}/testing_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
+                pickle.dump(self.preprocessors['testing_dataset_preprocessor'].data_files, f)
+
+            with open('{}/validating_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
+                pickle.dump(self.preprocessors['validating_dataset_preprocessor'].data_files, f)
 
             self._train_cnn_attention_model()
 

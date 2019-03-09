@@ -12,6 +12,7 @@ Options:
     --trained-model-dir=DIR          Path to a trained model weights to load and skip training.
 """
 import json
+import pickle
 from typing import Dict
 
 import numpy as np
@@ -45,16 +46,29 @@ def run(arguments) -> None:
         print(cnn_model.evaluate_f1())
 
 
-def load_train_test_validate_dataset(hyperparameters: Dict[str, any], input_data_dir: str) -> Dict[str, PreProcessor]:
+def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
+                                     input_data_dir: str,
+                                     trained_model_path: str = None) -> Dict[str, PreProcessor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
-    all_files = get_data_files_from_directory(input_data_dir,
-                                              skip_tests=preprocessor_hyperparameters['skip_tests'])
-    print("Total # files: {}".format(len(all_files)))
-    train_data_files, test_data_files = train_test_split(all_files, train_size=0.7)
-    train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9)
-    print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
-                                                                            len(test_data_files),
-                                                                            len(validate_data_files)))
+    if trained_model_path:
+        with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
+            train_data_files = pickle.load(f)
+
+        with open('{}/testing_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
+            test_data_files = pickle.load(f)
+
+        with open('{}/validating_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
+            validate_data_files = pickle.load(f)
+
+    else:
+        all_files = get_data_files_from_directory(input_data_dir,
+                                                  skip_tests=preprocessor_hyperparameters['skip_tests'])
+        print("Total # files: {}".format(len(all_files)))
+        train_data_files, test_data_files = train_test_split(all_files, train_size=0.7)
+        train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9)
+        print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
+                                                                                len(test_data_files),
+                                                                                len(validate_data_files)))
     training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
                                                  data_files=train_data_files)
     validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
