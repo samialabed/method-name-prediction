@@ -38,7 +38,7 @@ def run(arguments) -> None:
     trained_model_dir = arguments.get('--trained-model-dir')
 
     # preprocess the data files
-    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir)
+    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir, trained_model_dir)
 
     # TODO make this a python magic?
     if 'cnn_attention' in hyperparameters['model_type']:
@@ -48,19 +48,22 @@ def run(arguments) -> None:
 
 def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      input_data_dir: str,
-                                     trained_model_path: str = None) -> Dict[str, PreProcessor]:
+                                     trained_model_path: str) -> Dict[str, PreProcessor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
     if trained_model_path:
+        print("Retrieving previous pickled datafiles")
         with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
             train_data_files = pickle.load(f)
 
         with open('{}/testing_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
             test_data_files = pickle.load(f)
 
-        with open('{}/validating_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
+        with open('{}/validating_data_dirs_pikls.pkl'.format(trained_model_path), 'wb') as f:
             validate_data_files = pickle.load(f)
 
     else:
+        print("No previous files found, loading files")
+
         all_files = get_data_files_from_directory(input_data_dir,
                                                   skip_tests=preprocessor_hyperparameters['skip_tests'])
         print("Total # files: {}".format(len(all_files)))
