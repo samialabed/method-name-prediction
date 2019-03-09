@@ -1,0 +1,5 @@
+Train on 9398 samples, validate on 1055 samples                                                                                                                                                                      
+
+
+Training Data: 3538, Testing Data: 1686, Validating data: 394                                                                                                                                                        
+
