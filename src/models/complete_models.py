@@ -28,7 +28,7 @@ class CnnAttentionModel(object):
         # create model
         self.model = self._compile_cnn_attention_model()
 
-        if trained_model_path is None:
+        if trained_model_path:
             self.directory = "trained_models/{}/{}/{}".format(hyperparameters['model_type'],
                                                               hyperparameters['run_name'],
                                                               time.strftime("%Y-%m-%d-%H-%M"))

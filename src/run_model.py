@@ -9,7 +9,7 @@ Usage:
 Options:
     -h --help                        Show this screen.
     --debug                          Enable debug routines. [default: False]
-    --trained-model-path             Path to a trained model weights to load and skip training.
+    --trained-model-dir=DIR          Path to a trained model weights to load and skip training.
 """
 import json
 from typing import Dict
@@ -34,13 +34,14 @@ def run(arguments) -> None:
         hyperparameters = json.load(fp)
     _assert_hyperparameters(hyperparameters)
 
+    trained_model_dir = arguments.get('--trained-model-dir')
+
     # preprocess the data files
     datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir)
 
-    trained_model_path = arguments.get('--trained-model-path')
     # TODO make this a python magic?
     if 'cnn_attention' in hyperparameters['model_type']:
-        cnn_model = CnnAttentionModel(hyperparameters, datasets_preprocessors, trained_model_path)
+        cnn_model = CnnAttentionModel(hyperparameters, datasets_preprocessors, trained_model_dir)
         print(cnn_model.evaluate_f1())
 
 
