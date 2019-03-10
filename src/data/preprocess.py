@@ -60,6 +60,7 @@ class PreProcessor(object):
         self.data_files = data_files
         self.corpus_methods_token = self.get_tokens_from_dir()
         if metadata is None:
+            self.logger.info("No metadata found, building own metadata")
             metadata = self.load_metadata()
         self.metadata = metadata
 

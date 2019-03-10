@@ -35,6 +35,7 @@ def run(arguments) -> None:
         hyperparameters = json.load(fp)
     _assert_hyperparameters(hyperparameters)
 
+    # TODO give the choice to skip using previously defined training data
     trained_model_dir = arguments.get('--trained-model-dir')
 
     # preprocess the data files
@@ -50,6 +51,8 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      input_data_dir: str,
                                      trained_model_path: str) -> Dict[str, PreProcessor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
+
+    metadata = None
     if trained_model_path:
         print("Retrieving previous pickled datafiles")
         with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
@@ -60,6 +63,9 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
 
         with open('{}/validating_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
             validate_data_files = pickle.load(f)
+
+        with open('{}/vocab_pikls.pkl'.format(trained_model_path), 'rb') as f:
+            metadata = pickle.load(f)
 
     else:
         print("No previous files found, loading files")
@@ -73,7 +79,8 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                                                                 len(test_data_files),
                                                                                 len(validate_data_files)))
     training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                 data_files=train_data_files)
+                                                 data_files=train_data_files,
+                                                 metadata=metadata)
     validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
                                                    data_files=validate_data_files,
                                                    metadata=training_dataset_preprocessor.metadata)

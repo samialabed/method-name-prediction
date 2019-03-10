@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import pickle
 import time
@@ -25,11 +26,13 @@ class CnnAttentionModel(object):
         self.hyperparameters = hyperparameters
         self.preprocessors = preprocessors
         self.vocab = preprocessors['training_dataset_preprocessor'].metadata['token_vocab']
+        self.logger = logging.getLogger(__name__)
 
         # create model
         self.model = self._compile_cnn_attention_model()
 
         if trained_model_path:
+            self.logger.info('Loading saved weights')
             self.directory = trained_model_path
             self.model.load_weights("{}/weights-final.hdf5".format(self.directory))
         else:
@@ -39,6 +42,7 @@ class CnnAttentionModel(object):
             if not os.path.exists(self.directory):
                 os.makedirs(self.directory)
 
+            self.logger.info('Saving configs, training, testing, validating, and vocabs')
             with open('{}/config.json'.format(self.directory), 'w') as fp:
                 json.dump(hyperparameters, fp)
 
@@ -51,6 +55,9 @@ class CnnAttentionModel(object):
 
             with open('{}/validating_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
                 pickle.dump(self.preprocessors['validating_dataset_preprocessor'].data_files, f)
+
+            with open('{}/vocab_pikls.pkl'.format(self.directory), 'wb') as f:
+                pickle.dump(self.preprocessors['training_dataset_preprocessor'].metadata['token_vocab'], f)
 
             self._train_cnn_attention_model()
 
