@@ -1,0 +1,60 @@
+==================Begin Words===============================
+input_body: ['<s>', 'super', 'lparen', 'simple', 'name', 'comma', 'field', 'type', 'comma', 'default', 'field', 'type', 'comma', 'index', 'settings', 'comma', 'multi', 'fields', 'comma', 'copy', 'to', 'rparen', 'semi', 'assert', 'field', 'type', 'dot', 'index', 'options', 'lparen', 'rparen', 'dot', 'compare', 'to', 'lparen', 'index', 'options', 'dot', 'docs', 'and', 'freqs', 'rparen', 'lteq', '0', 'semi', '</s>']
+target_name: ['<s>', 'feature', 'field', 'mapper', '</s>']
+predictions: [['<s>', 'vector', 'feature', '</s>'], ['<s>', 'vector', 'feature', 'mapper', '</s>'], ['<s>', 'vector', 'feature', 'mapper', '</s>'], ['<s>', 'vector', 'mapper', '</s>'], ['<s>', 'vector', 'feature', '</s>']]
+probs: [0.04408943 0.03269473 0.03004188 0.0173895  0.00017614]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'flags', 'eqeq', 'null', 'barbar', 'flags', 'dot', 'is', 'empty', 'lparen', 'rparen', 'rparen', 'lbrace', 'return', 'reg', 'exp', 'dot', 'all', 'semi', 'rbrace', 'int', 'magic', 'eq', 'reg', 'exp', 'dot', 'none', 'semi', 'for', 'lparen', 'string', 's', 'colon', 'strings', 'dot', 'delimited', 'list', 'to', 'string', 'array', 'lparen', 'flags', 'comma', '|', 'rparen', 'rparen', 'lbrace', 'if']
+target_name: ['<s>', 'resolve', 'value', '</s>']
+predictions: [['<s>', 'resolve', 'flags', '</s>'], ['<s>', 'flags', '</s>'], ['<s>', 'resolve', 'flags', '</s>'], ['<s>', 'resolve', 'flags', '</s>'], ['<s>', 'flags', '</s>']]
+probs: [0.25190625 0.18093255 0.06337455 0.02207147 0.01509234]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'super', 'lparen', 'location', 'rparen', 'semi', 'this', 'dot', 'condition', 'eq', 'objects', 'dot', 'require', 'non', 'null', 'lparen', 'condition', 'rparen', 'semi', 'this', 'dot', 'block', 'eq', 'block', 'semi', '</s>']
+target_name: ['<s>', '%UNK%', 'o', '</s>']
+predictions: [['<s>', 'sw', 'condition', '</s>'], ['<s>', 'sw', '%UNK%', '</s>'], ['<s>', 'condition', '</s>'], ['<s>', 'sw', 'condition', '</s>'], ['<s>', 'sw', 'condition', '</s>']]
+probs: [6.5192506e-02 3.7836615e-02 1.0754555e-02 4.1821664e-03 6.5192474e-09]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'return', 'date', 'time', 'convert', 'lparen', 'millis', 'comma', '%UNK%', 'comma', 'c', 'arrow', 'lbrace', 'c', 'dot', 'set', 'lparen', 'hour', 'of', 'day', 'comma', '0', 'rparen', 'semi', 'c', 'dot', 'set', 'lparen', 'minute', 'comma', '0', 'rparen', 'semi', 'c', 'dot', 'set', 'lparen', 'second', 'comma', '0', 'rparen', 'semi', 'c', 'dot', 'set', 'lparen', '%UNK%', 'comma', '0', 'rparen']
+target_name: ['<s>', 'convert', 'date', '</s>']
+predictions: [['<s>', '0', '</s>'], ['<s>', '0', 'negative', '0', '</s>'], ['<s>', '0', '</s>'], ['<s>', '0', '</s>'], ['<s>', '0', '</s>']]
+probs: [5.6721902e-01 4.5298226e-02 4.3398712e-02 4.4897292e-03 5.6721852e-08]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'return', 'date', 'time', 'convert', 'lparen', 'millis', 'comma', '%UNK%', 'comma', 'c', 'arrow', 'lbrace', 'c', 'dot', 'set', 'lparen', 'era', 'comma', '%UNK%', 'calendar', 'dot', 'ad', 'rparen', 'semi', 'c', 'dot', 'set', 'lparen', 'year', 'comma', '%UNK%', 'rparen', 'semi', 'c', 'dot', 'set', 'lparen', 'month', 'comma', '0', 'rparen', 'semi', 'c', 'dot', 'set', 'lparen', 'day', 'of', 'month']
+target_name: ['<s>', 'convert', 'time', '</s>']
+predictions: [['<s>', 'month', '</s>'], ['<s>', 'month', '</s>'], ['<s>', 'month', '</s>'], ['<s>', 'month', '</s>'], ['<s>', 'month', '</s>']]
+probs: [5.6836146e-01 3.1415206e-01 6.4271271e-02 3.7140865e-03 5.6934734e-08]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'millis', 'eqeq', 'null', 'rparen', 'lbrace', 'return', 'null', 'semi', 'rbrace', 'long', 'initial', 'eq', 'c', 'dot', 'get', 'time', 'in', 'millis', 'lparen', 'rparen', 'semi', 'try', 'lbrace', 'c', 'dot', 'set', 'time', 'in', 'millis', 'lparen', 'millis', 'rparen', 'semi', 'return', 'creator', 'dot', 'apply', 'lparen', 'c', 'rparen', 'semi', 'rbrace', 'finally', 'lbrace', 'c', 'dot', 'set']
+target_name: ['<s>', 'date', 'time', 'convert', '</s>']
+predictions: [['<s>', 'create', '</s>'], ['<s>', 'create', 'millis', '</s>'], ['<s>', 'create', '</s>'], ['<s>', 'create', 'millis', '</s>'], ['<s>', 'create', 'millis', '</s>']]
+probs: [0.0529599  0.03165815 0.03038584 0.01660467 0.01534551]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', '%UNK%', 'eqeq', 'null', 'rparen', 'lbrace', 'return', 'value', 'semi', 'rbrace', 'calendar', 'c', 'eq', 'lparen', 'calendar', 'rparen', '%UNK%', 'dot', 'clone', 'lparen', 'rparen', 'semi', 'c', 'dot', 'set', 'time', 'in', 'millis', 'lparen', 'value', 'rparen', 'semi', 'zoned', 'date', 'time', '%UNK%', 'date', 'time', 'eq', 'zoned', 'date', 'time', 'dot', 'of', 'instant', 'lparen', 'c', 'dot']
+target_name: ['<s>', 'convert', 'from', 'calendar', 'to', 'utc', '</s>']
+predictions: [['<s>', 'date', '</s>'], ['<s>', 'date', '</s>'], ['<s>', 'parse', '</s>'], ['<s>', 'date', '</s>'], ['<s>', 'date', '</s>']]
+probs: [1.9737610e-01 1.5784895e-01 2.4366612e-02 4.2241709e-03 1.9737611e-08]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'type', 'eqeq', 'null', 'rparen', 'lbrace', 'return', 'lparen', 't', 'rparen', 'convert', 'lparen', 'val', 'comma', 'column', 'type', 'rparen', 'semi', 'rbrace', 'if', 'lparen', 'type', 'dot', 'is', 'instance', 'lparen', 'val', 'rparen', 'rparen', 'lbrace', 'try', 'lbrace', 'return', 'type', 'dot', 'cast', 'lparen', 'val', 'rparen', 'semi', 'rbrace', 'catch', 'lparen', 'class', 'cast', 'exception', '%UNK%', 'rparen']
+target_name: ['<s>', 'suppress', 'warnings', '</s>', '<s>', 'convert', '</s>']
+predictions: [['<s>', 'cast', '</s>'], ['<s>', 'cast', '</s>'], ['<s>', 'cast', '</s>'], ['<s>', 'cast', '</s>'], ['<s>', 'cast', '</s>']]
+probs: [3.7539732e-01 1.8842563e-01 8.0089211e-02 1.5389844e-02 1.5358927e-07]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'final', 'data', 'type', 'data', 'type', 'semi', 'try', 'lbrace', 'data', 'type', 'eq', 'data', 'type', 'dot', 'from', 'jdbc', 'type', 'lparen', 'jdbc', 'type', 'rparen', 'semi', 'rbrace', 'catch', 'lparen', 'illegal', 'argument', 'exception', 'ex', 'rparen', 'lbrace', 'throw', 'new', 'jdbc', 'sqle', 'xception', 'lparen', 'ex', 'comma', 'ex', 'dot', 'get', 'message', 'lparen', 'rparen', 'rparen', 'semi', 'rbrace', 'if']
+target_name: ['<s>', 'class', 'name', 'of', '</s>']
+predictions: [['<s>', 'to', '</s>'], ['<s>', 'to', '</s>'], ['<s>', 'to', '</s>'], ['<s>', 'to', '</s>'], ['<s>', 'to', '</s>']]
+probs: [2.4814075e-01 1.8908733e-01 3.2868054e-02 1.8182492e-02 2.4814044e-08]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'switch', 'lparen', 'column', 'type', 'rparen', 'lbrace', 'case', 'null', 'colon', 'return', 'null', 'semi', 'case', 'boolean', 'colon', 'case', '%UNK%', 'colon', 'return', 'v', 'semi', 'case', '%UNK%', 'colon', 'return', 'lparen', 'lparen', 'number', 'rparen', 'v', 'rparen', 'dot', 'byte', 'value', 'lparen', 'rparen', 'semi', 'case', '%UNK%', 'colon', 'return', 'lparen', 'lparen', 'number', 'rparen', 'v', 'rparen', 'dot', 'short']
+target_name: ['<s>', 'convert', '</s>']
+predictions: [['<s>', 'resolve', '</s>'], ['<s>', 'resolve', 'value', '</s>'], ['<s>', 'from', '</s>'], ['<s>', 'resolve', 'from', '</s>'], ['<s>', 'resolve', '</s>']]
+probs: [0.03682742 0.00846837 0.00811717 0.00645243 0.00502797]
+=================================================
