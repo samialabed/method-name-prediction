@@ -66,7 +66,7 @@ class AttentionWeights(models.Model):
         self.logger = logging.getLogger(__name__)
         self.conv1 = TimeDistributed(Conv1D(1, w3, activation=None, padding='causal', name='atn_weight_conv1'))
         self.dropout = Dropout(dropout_rate)
-        self.softmax = Softmax(name='atn_weight_softmax')
+        self.softmax = TimeDistributed(Softmax(name='atn_weight_softmax'))
 
     def call(self, l_feat_and_input_mask: List[Tensor], training=False, **kwargs):
         l_feat, mask = l_feat_and_input_mask
