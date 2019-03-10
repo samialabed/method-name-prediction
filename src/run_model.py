@@ -52,7 +52,7 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      trained_model_path: str) -> Dict[str, PreProcessor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
 
-    metadata = None
+    vocabulary = None
     if trained_model_path:
         print("Retrieving previous pickled datafiles")
         with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
@@ -65,7 +65,7 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
             validate_data_files = pickle.load(f)
 
         with open('{}/vocab_pikls.pkl'.format(trained_model_path), 'rb') as f:
-            metadata = pickle.load(f)
+            vocabulary = pickle.load(f)
 
     else:
         print("No previous files found, loading files")
@@ -80,13 +80,13 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                                                                 len(validate_data_files)))
     training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
                                                  data_files=train_data_files,
-                                                 metadata=metadata)
+                                                 vocabulary=vocabulary)
     validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
                                                    data_files=validate_data_files,
-                                                   metadata=training_dataset_preprocessor.metadata)
+                                                   vocabulary=training_dataset_preprocessor.vocabulary)
     testing_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
                                                 data_files=test_data_files,
-                                                metadata=training_dataset_preprocessor.metadata)
+                                                vocabulary=training_dataset_preprocessor.vocabulary)
 
     return {'training_dataset_preprocessor': training_dataset_preprocessor,
             'validating_dataset_preprocessor': validating_dataset_preprocessor,

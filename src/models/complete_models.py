@@ -25,7 +25,7 @@ class CnnAttentionModel(object):
                  trained_model_path: str = None):
         self.hyperparameters = hyperparameters
         self.preprocessors = preprocessors
-        self.vocab = preprocessors['training_dataset_preprocessor'].metadata['token_vocab']
+        self.vocab = preprocessors['training_dataset_preprocessor'].vocabulary
         self.logger = logging.getLogger(__name__)
 
         # create model
@@ -57,7 +57,7 @@ class CnnAttentionModel(object):
                 pickle.dump(self.preprocessors['validating_dataset_preprocessor'].data_files, f)
 
             with open('{}/vocab_pikls.pkl'.format(self.directory), 'wb') as f:
-                pickle.dump(self.preprocessors['training_dataset_preprocessor'].metadata['token_vocab'], f)
+                pickle.dump(self.preprocessors['training_dataset_preprocessor'].vocabulary, f)
 
             self._train_cnn_attention_model()
 

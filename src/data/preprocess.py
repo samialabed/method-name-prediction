@@ -41,7 +41,7 @@ def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None)
 class PreProcessor(object):
 
     def __init__(self, config: Dict[str, Any], data_files: List[str],
-                 max_num_files: int = None, metadata: Dict[str, Any] = None):
+                 max_num_files: int = None, vocabulary: Vocabulary = None):
         """
         :param config: dictionary containing parsers configs and vocabulary size.
             DEFAULT_CONFIG = {
@@ -52,20 +52,20 @@ class PreProcessor(object):
         }
         :param data_dir: path to data input directory
         :param max_num_files: Maximal number of files to load.
-        :param metadata: (Optional) metadata about the corpus, holds vocabulary. This is useful for test dataset.
+        :param vocabulary: (Optional) corpus vocabulary, if not given will build it from the input.
         """
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.max_num_files = max_num_files
         self.data_files = data_files
         self.corpus_methods_token = self.get_tokens_from_dir()
-        if metadata is None:
-            self.logger.info("No metadata found, building own metadata")
-            metadata = self.load_metadata()
-        self.metadata = metadata
+        if vocabulary is None:
+            self.logger.info("No vocabulary found, building own vocabulary")
+            vocabulary = self.load_vocabulary()
+        self.vocabulary = vocabulary
 
-    def load_metadata(self) -> Dict[str, Vocabulary]:
-        """ Return model metadata such as a vocabulary. """
+    def load_vocabulary(self) -> Vocabulary:
+        """ Return model vocabulary such as a vocabulary. """
         max_size = self.config['vocabulary_max_size']
         count_threshold = self.config['vocabulary_count_threshold']
         # Count occurrences of the body vocabulary
@@ -83,8 +83,7 @@ class PreProcessor(object):
                                                    add_pad=True)
 
         self.logger.info('{} Vocabulary created'.format(len(token_vocab)))
-        # TODO - add more stats about the directory, such as number of methods, longest method, etc.
-        return {'token_vocab': token_vocab}
+        return token_vocab
 
     def get_tensorise_data(self) -> LoadedSamples:
         """ Returns a tensoirsed data representation from directory path"""
@@ -99,7 +98,7 @@ class PreProcessor(object):
         loaded_data = {'name_tokens': [], 'body_tokens': []}
 
         max_chunk_length = self.config['max_chunk_length']
-        vocab = self.metadata['token_vocab']
+        vocab = self.vocabulary
 
         for file_token_seqs in files_token_seqs:
             for (method_name, method_body) in file_token_seqs:
