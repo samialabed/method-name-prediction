@@ -1,0 +1,60 @@
+==================Begin Words===============================
+input_body: ['<s>', 'this', 'dot', 'query', 'eq', 'query', 'semi', 'this', 'dot', 'aggs', 'eq', 'aggs', 'eqeq', 'null', 'ques', 'new', 'aggs', 'lparen', 'rparen', 'colon', 'aggs', 'semi', 'this', 'dot', 'aliases', 'eq', 'aliases', 'eqeq', 'null', 'barbar', 'aliases', 'dot', 'is', 'empty', 'lparen', 'rparen', 'ques', 'empty', 'map', 'lparen', 'rparen', 'colon', 'aliases', 'semi', 'this', 'dot', '%UNK%', 'functions', 'eq', '%UNK%']
+target_name: ['<s>', 'query', 'container', '</s>']
+predictions: [['<s>', 'aliases', '</s>']]
+probs: [34.662846]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'set', 'lt', 'sort', 'gt', 'sort', 'eq', 'new', 'linked', 'hash', 'set', 'lt', 'gt', 'lparen', 'this', 'dot', 'sort', 'rparen', 'semi', 'sort', 'dot', 'add', 'lparen', 'sortable', 'rparen', 'semi', 'return', 'new', 'query', 'container', 'lparen', 'query', 'comma', 'aggs', 'comma', 'columns', 'comma', 'aliases', 'comma', '%UNK%', 'functions', 'comma', 'scalar', 'functions', 'comma', 'sort', 'comma', 'limit', 'rparen', 'semi']
+target_name: ['<s>', 'sort', '</s>']
+predictions: [['<s>', 'test', '</s>']]
+probs: [14.213679]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'list', 'lt', 'field', 'extraction', 'gt', 'nested', 'refs', 'eq', 'new', 'array', 'list', 'lt', 'gt', 'lparen', 'rparen', 'semi', 'string', 'name', 'eq', 'alias', 'name', 'lparen', 'attr', 'rparen', 'semi', 'query', 'q', 'eq', 'rewrite', 'to', 'contain', 'nested', 'field', 'lparen', 'query', 'comma', 'attr', 'dot', 'location', 'lparen', 'rparen', 'comma', 'attr', 'dot', 'nested', 'parent', 'lparen', 'rparen', 'dot']
+target_name: ['<s>', 'nested', 'hit', 'field', 'ref', '</s>']
+predictions: [['<s>', 'to', 'nested', '</s>']]
+probs: [134.06387]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'query', 'eqeq', 'null', 'rparen', 'lbrace', 'return', 'new', 'nested', 'query', 'lparen', 'location', 'comma', 'path', 'comma', 'singleton', 'map', 'lparen', 'name', 'comma', 'has', 'doc', 'values', 'rparen', 'comma', 'new', 'match', 'all', 'lparen', 'location', 'rparen', 'rparen', 'semi', 'rbrace', 'if', 'lparen', 'query', 'dot', 'contains', 'nested', 'field', 'lparen', 'path', 'comma', 'name', 'rparen', 'rparen', 'lbrace']
+target_name: ['<s>', 'rewrite', 'to', 'contain', 'nested', 'field', '</s>']
+predictions: [['<s>', 'new', 'nested', '</s>']]
+probs: [10.02781]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'attribute', 'name', 'eq', 'aliases', 'dot', 'get', 'or', 'default', 'lparen', 'sfa', 'comma', 'sfa', 'rparen', 'semi', 'processor', 'definition', 'proc', 'eq', 'scalar', 'functions', 'dot', 'get', 'lparen', 'name', 'rparen', 'semi', 'if', 'lparen', 'proc', 'eqeq', 'null', 'rparen', 'lbrace', 'if', 'lparen', 'name', 'instanceof', 'scalar', 'function', 'attribute', 'rparen', 'lbrace', 'sfa', 'eq', 'lparen', 'scalar', 'function', 'attribute', 'rparen']
+target_name: ['<s>', '%UNK%', 'ref', '</s>']
+predictions: [['<s>', 'get', 'from', '</s>']]
+probs: [158.97502]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'attr', 'instanceof', 'field', 'attribute', 'rparen', 'lbrace', 'field', 'attribute', 'fa', 'eq', 'lparen', 'field', 'attribute', 'rparen', 'attr', 'semi', 'if', 'lparen', 'fa', 'dot', 'is', 'nested', 'lparen', 'rparen', 'rparen', 'lbrace', 'return', 'nested', 'hit', 'field', 'ref', 'lparen', 'fa', 'rparen', 'semi', 'rbrace', 'else', 'lbrace', 'return', 'new', 'tuple', 'lt', 'gt', 'lparen', 'this', 'comma', 'top']
+target_name: ['<s>', 'to', 'reference', '</s>']
+predictions: [['<s>', 'wrap', '</s>']]
+probs: [25.674406]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'field', 'extraction', 'ref', 'eq', 'group', 'eqeq', 'null', 'ques', 'global', 'count', 'ref', 'dot', 'instance', 'colon', 'new', 'group', 'by', 'ref', 'lparen', 'group', 'dot', 'id', 'lparen', 'rparen', 'comma', 'property', 'dot', 'count', 'comma', 'null', 'rparen', 'semi', 'map', 'lt', 'string', 'comma', 'group', 'by', 'key', 'gt', '%UNK%', 'functions', 'eq', 'new', 'linked', 'hash', 'map', 'lt', 'gt']
+target_name: ['<s>', 'add', 'agg', 'count', '</s>']
+predictions: [['<s>', 'group', '</s>']]
+probs: [64.99168]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'super', 'lparen', 'task', 'failures', 'comma', 'node', 'failures', 'rparen', 'semi', 'this', 'dot', 'tasks', 'eq', 'tasks', 'eqeq', 'null', 'ques', 'collections', 'dot', 'empty', 'list', 'lparen', 'rparen', 'colon', 'collections', 'dot', 'unmodifiable', 'list', 'lparen', 'new', 'array', 'list', 'lt', 'gt', 'lparen', 'tasks', 'rparen', 'rparen', 'semi', '</s>']
+target_name: ['<s>', 'list', 'tasks', 'response', '</s>']
+predictions: [['<s>', 'tasks', '</s>']]
+probs: [155.91756]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'constructing', 'object', 'parser', 'lt', 't', 'comma', 'void', 'gt', 'parser', 'eq', 'new', 'constructing', 'object', 'parser', 'lt', 'gt', 'lparen', 'name', 'comma', 'true', 'comma', 'constructing', 'objects', 'arrow', 'lbrace', 'int', 'i', 'eq', '0', 'semi', 'monkeys_at', 'suppress', 'warnings', 'lparen', 'unchecked', 'rparen', 'list', 'lt', 'task', 'info', 'gt', 'tasks', 'eq', 'lparen', 'list', 'lt', 'task', 'info', 'gt']
+target_name: ['<s>', 'setup', 'parser', '</s>']
+predictions: [['<s>', 'test', 'rethrottle', '</s>']]
+probs: [2263.0466]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'per', 'node', 'tasks', 'eqeq', 'null', 'rparen', 'lbrace', 'per', 'node', 'tasks', 'eq', 'tasks', 'dot', 'stream', 'lparen', 'rparen', 'dot', 'collect', 'lparen', 'collectors', 'dot', 'grouping', 'by', 'lparen', 't', 'arrow', 't', 'dot', 'get', 'task', 'id', 'lparen', 'rparen', 'dot', 'get', 'node', 'id', 'lparen', 'rparen', 'rparen', 'rparen', 'semi', 'rbrace', 'return', 'per', 'node', 'tasks']
+target_name: ['<s>', 'get', 'per', 'node', 'tasks', '</s>']
+predictions: [['<s>', 'get', 'tasks', '</s>']]
+probs: [149.33652]
+=================================================

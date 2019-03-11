@@ -1,1 +1,1 @@
-Training samples: 21283, validating samples: 2386
+Training samples: 21283, validating samples: 2386Testing samples: 10644
