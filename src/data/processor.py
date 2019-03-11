@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Iterable, Tuple
 import numpy as np
 from dpu_utils.mlutils import Vocabulary
 
-from data.graph_feature_extractor import GraphFeatureExtractor
+from data.graph_feature_extractor import GraphFeatureExtractor, UnsupportedMethodStructureException
 from data.graph_pb2 import Graph
 
 NameBodyTokens = Tuple[List[str], List[str]]
@@ -132,11 +132,8 @@ class Processor(object):
                 graph.ParseFromString(f.read())
                 feature_extractor = GraphFeatureExtractor(graph,
                                                           remove_override_methods=True,
-                                                          min_line_of_codes=self.config['min_line_of_codes'])
+                                                          min_line_of_codes=self.config['min_line_of_codes'],
+                                                          skip_tests=self.config['skip_tests'])
                 yield feature_extractor.retrieve_methods_content()
-        # TODO separate this into multiple exceptions and use it to skip tests and others files
-        except Exception as e:
-            # This means the method isn't traditional in the sense that it either doesn't contain body
-            # (abstract method) or is an anonymous function, in both cases they are not input the model accepts,
-            # so the warning can be safely ignored.
+        except UnsupportedMethodStructureException as e:
             self.logger.warning("Failed to load data from path: {}. Exception: {}".format(path, e))

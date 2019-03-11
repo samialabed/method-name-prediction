@@ -6,10 +6,20 @@ from data.constants import SENTENCE_START_TOKEN, SENTENCE_END_TOKEN
 from data.graph_pb2 import FeatureNode, Graph
 
 
+class UnsupportedMethodStructureException(Exception):
+    """
+    Raised when the method structure isn't supported in the sense that it either doesn't contain body
+    such as (abstract method) or is an anonymous function, in both cases they are not input the model accepts,
+    so the exception can be safely ignored.
+    """
+    pass
+
+
 class GraphFeatureExtractor(object):
     def __init__(self, graph: Graph,
                  remove_override_methods: bool,
-                 min_line_of_codes: int):
+                 min_line_of_codes: int,
+                 skip_tests: bool):
         """
         Extract features from graph_pb2.py graph.
 
@@ -18,6 +28,7 @@ class GraphFeatureExtractor(object):
         :param min_line_of_codes: minimum line of codes each method should contain. including the method signature.
         """
         self.graph = graph
+        self.skip_tests = skip_tests
         self.edges_map = self.edge_list_to_map()
         self.tokens_to_content_map = self.map_tokens_id_to_content()
         self.remove_override_methods = remove_override_methods
@@ -103,14 +114,15 @@ class GraphFeatureExtractor(object):
             else:
                 self._dfs(child_id, out)
 
-    @staticmethod
-    def separate_method_name_from_body(method_token: List[List[str]]) -> Tuple[List[str], List[str]]:
+    def separate_method_name_from_body(self, method_token: List[List[str]]) -> Tuple[List[str], List[str]]:
         method_name = []
         body = []
         for idx, token in enumerate(method_token):
             if 'abstract' in token or 'interface' in token:  # skip abstract methods and interfaces
-                return None, None
+                return None, None  # return None instead of exceptions for performance reasons
             # the method name is the first token that comes before '('
+            elif self.skip_tests and ('test' in token or 'tests' in token):
+                return None, None
             elif idx + 1 < len(method_token) and 'lparen' in method_token[idx + 1]:
                 method_name.append(SENTENCE_START_TOKEN)
                 method_name.extend([t for t in token])
@@ -126,5 +138,4 @@ class GraphFeatureExtractor(object):
 
                 return method_name, body
 
-        raise Exception(
-            'Failed to separate the method name and body from the token. Method tokens: {}'.format(method_token))
+        raise UnsupportedMethodStructureException('Method tokens: {}'.format(method_token))
