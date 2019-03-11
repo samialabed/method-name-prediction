@@ -11,7 +11,7 @@ Status:
 ### Prerequisites 
 The easiest way to install the prerequisites is to use [Anaconda](https://conda.io/en/latest/). 
 
-```
+```bash
 # Install the environment
 conda env create --file=environment.yml
 
@@ -67,7 +67,7 @@ Full beamsearch is used in the inference - therefore the model inference takes a
 ### Reproducing Evaluation Results
 #### Model trained on Elasticsearch corpus excluding the unit tests
 To reproduce the results of the model trained on Elasticsearch corpus excluding unittests:
-```
+```bash
 python src/run_model.py \
     --trained-model-dir=trained_models/cnn_attention/elasticsearch_with_no_tests/2019-03-09-16-12/ \
     --use-same-input-dir \
@@ -78,7 +78,7 @@ The model will generate F1-results and predictions and output them to files in t
 
 #### Model trained on Elasticsearch corpus excluding the unit tests
 To reproduce the results of the model trained on Elasticsearch corpus excluding unittests:
-```
+```bash
 python src/run_model.py \
     --trained-model-dir=trained_models/cnn_attention/elasticsearch_with_tests/2019-03-09-23-45/ \
     --use-same-input-dir \
