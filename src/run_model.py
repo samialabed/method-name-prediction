@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Usage:
-    train.py [options] DATA_DIR PATH_TO_CONFIG_FILE
+    run_model.py [options] DATA_DIR PATH_TO_CONFIG_FILE
 
 *DATA_DIR directory filled with data with corpus extracted into .proto
 *PATH_TO_CONFIG_FILE file for the model see configs/example-config.json for example
@@ -10,6 +10,7 @@ Options:
     -h --help                        Show this screen.
     --debug                          Enable debug routines. [default: False]
     --trained-model-dir=DIR          Path to a trained model weights to load and skip training.
+    --use-same-input-dir             Use the same datasets for trianing/validating/testing as the trained-model
 """
 import json
 import pickle
@@ -37,9 +38,11 @@ def run(arguments) -> None:
 
     # TODO give the choice to skip using previously defined training data
     trained_model_dir = arguments.get('--trained-model-dir')
+    use_same_input_as_trained_model = arguments.get('--use-same-input-dir')
 
     # preprocess the data files
-    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir, trained_model_dir)
+    datasets_preprocessors = load_train_test_validate_dataset(hyperparameters, input_data_dir, trained_model_dir,
+                                                              use_same_input_as_trained_model)
 
     # TODO make this a python magic?
     if 'cnn_attention' in hyperparameters['model_type']:
@@ -49,11 +52,18 @@ def run(arguments) -> None:
 
 def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      input_data_dir: str,
-                                     trained_model_path: str) -> Dict[str, PreProcessor]:
+                                     trained_model_path: str,
+                                     use_same_input_as_trained_model: bool
+                                     ) -> Dict[str, PreProcessor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
 
     vocabulary = None
     if trained_model_path:
+        print("Loading trained model vocabulary")
+        with open('{}/vocab_pikls.pkl'.format(trained_model_path), 'rb') as f:
+            vocabulary = pickle.load(f)
+
+    if trained_model_path and use_same_input_as_trained_model:
         print("Retrieving previous pickled datafiles")
         with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
             train_data_files = pickle.load(f)
@@ -64,11 +74,8 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
         with open('{}/validating_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
             validate_data_files = pickle.load(f)
 
-        with open('{}/vocab_pikls.pkl'.format(trained_model_path), 'rb') as f:
-            vocabulary = pickle.load(f)
-
     else:
-        print("No previous files found, loading files")
+        print("Manually loading files from input_data_dir")
 
         all_files = get_data_files_from_directory(input_data_dir,
                                                   skip_tests=preprocessor_hyperparameters['skip_tests'])

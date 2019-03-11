@@ -1,16 +1,16 @@
 name: method-name-prediction
-dependencies: 
+dependencies:
  - python=3.6.8
- - numpy
- - tensorflow-gpu
+ - numpy=1.15.4
  - docopt
  - urllib3
  - jupyter
  - pydot
  - graphviz
  - pip:
-   - dpu-utils
+   - tensorflow==1.13.1
+   - dpu-utils==0.1.25
    - sklearn
    - more_itertools
-   - watermark
+   - watermark==1.8.1
    - jupyter_tensorboard
