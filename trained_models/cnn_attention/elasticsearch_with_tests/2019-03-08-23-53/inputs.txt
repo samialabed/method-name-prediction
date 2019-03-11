@@ -1,1 +1,0 @@
-Training samples: 21327, validating samples: 2237, testing samples: 10749

@@ -1,13 +1,14 @@
-import pickle
 from typing import Dict
 
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 from data.preprocess import PreProcessor, get_data_files_from_directory
+from utils.save_util import ReproducibilitySaver
 
 
 def save_train_validate_history(directory: str, history):
+    # TODO move it to ReproducibilitySaver
     # Plot training & validation accuracy values
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
@@ -30,31 +31,21 @@ def save_train_validate_history(directory: str, history):
 
 def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      input_data_dir: str,
-                                     trained_model_path: str,
-                                     use_same_input_as_trained_model: bool
-                                     ) -> Dict[str, PreProcessor]:
+                                     reproducibility_saver: ReproducibilitySaver) -> Dict[str, PreProcessor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
 
     vocabulary = None
-    if trained_model_path:
-        print("Loading trained model vocabulary")
-        with open('{}/vocab_pikls.pkl'.format(trained_model_path), 'rb') as f:
-            vocabulary = pickle.load(f)
+    # TODO make it save the tensorised value
+    if reproducibility_saver.restore_model:
+        vocabulary = reproducibility_saver.restore_vocabulary()
 
-    if trained_model_path and use_same_input_as_trained_model:
-        print("Retrieving previous pickled datafiles")
-        with open('{}/training_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
-            train_data_files = pickle.load(f)
-
-        with open('{}/testing_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
-            test_data_files = pickle.load(f)
-
-        with open('{}/validating_data_dirs_pikls.pkl'.format(trained_model_path), 'rb') as f:
-            validate_data_files = pickle.load(f)
-
+    if reproducibility_saver.restore_data:
+        restored_dirs = reproducibility_saver.restore_preprocessed_dirs()
+        train_data_files = restored_dirs['training_data_files']
+        test_data_files = restored_dirs['testing_data_files']
+        validate_data_files = restored_dirs['validating_data_files']
     else:
         print("Manually loading files from input_data_dir")
-
         all_files = get_data_files_from_directory(input_data_dir,
                                                   skip_tests=preprocessor_hyperparameters['skip_tests'])
         print("Total # files: {}".format(len(all_files)))
@@ -78,7 +69,7 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
             'testing_dataset_preprocessor': testing_dataset_preprocessor}
 
 
-def _assert_hyperparameters(hyperparameters: Dict[str, any]):
+def assert_model_hyperparameters(hyperparameters: Dict[str, any]):
     if 'run_name' not in hyperparameters:
         raise ValueError("No run_name given")
 

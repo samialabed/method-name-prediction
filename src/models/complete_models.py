@@ -1,8 +1,4 @@
-import json
 import logging
-import os
-import pickle
-import time
 from typing import Dict
 
 import numpy as np
@@ -15,49 +11,34 @@ from data.preprocess import PreProcessor
 from models.cnn_attention import ConvAttention
 from utils.f1_evaluator import evaluate_f1
 from utils.run_utils import save_train_validate_history
+from utils.save_util import ReproducibilitySaver, OutputFilesNames
 
 
-# TODO refactor the save into util functions
-# TODO add pickling to preprocessors for easier reproducibility
 class CnnAttentionModel(object):
-    def __init__(self, hyperparameters: Dict[str, any],
+    def __init__(self,
+                 hyperparameters: Dict[str, any],
                  preprocessors: Dict[str, PreProcessor],
-                 trained_model_path: str = None):
+                 reproducibility_saver: ReproducibilitySaver):
+        self.reproducibility_saver = reproducibility_saver
         self.hyperparameters = hyperparameters
         self.preprocessors = preprocessors
         self.vocab = preprocessors['training_dataset_preprocessor'].vocabulary
         self.logger = logging.getLogger(__name__)
+        self.directory = self.reproducibility_saver.directory
 
         # create model
         self.model = self._compile_cnn_attention_model()
 
-        if trained_model_path:
+        if self.reproducibility_saver.restore_model:
             self.logger.info('Loading saved weights')
-            self.directory = trained_model_path
-            self.model.load_weights("{}/weights-final.hdf5".format(self.directory))
+            self.model.load_weights("{}/{}".format(self.directory, OutputFilesNames.FINAL_MODEL_WEIGHT))
         else:
-            self.directory = "trained_models/{}/{}/{}".format(hyperparameters['model_type'],
-                                                              hyperparameters['run_name'],
-                                                              time.strftime("%Y-%m-%d-%H-%M"))
-            if not os.path.exists(self.directory):
-                os.makedirs(self.directory)
-
-            self.logger.info('Saving configs, training, testing, validating, and vocabs')
-            with open('{}/config.json'.format(self.directory), 'w') as fp:
-                json.dump(hyperparameters, fp)
-
+            # TODO move those out into the saver model
             # Save name of files to allow reproducibility
-            with open('{}/training_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
-                pickle.dump(self.preprocessors['training_dataset_preprocessor'].data_files, f)
-
-            with open('{}/testing_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
-                pickle.dump(self.preprocessors['testing_dataset_preprocessor'].data_files, f)
-
-            with open('{}/validating_data_dirs_pikls.pkl'.format(self.directory), 'wb') as f:
-                pickle.dump(self.preprocessors['validating_dataset_preprocessor'].data_files, f)
-
-            with open('{}/vocab_pikls.pkl'.format(self.directory), 'wb') as f:
-                pickle.dump(self.preprocessors['training_dataset_preprocessor'].vocabulary, f)
+            self.logger.info('Saving hyperparameters, training, testing, validating, and vocabs')
+            self.reproducibility_saver.save_hyperparameters(hyperparameters)
+            self.reproducibility_saver.save_preprocessed_dirs(preprocessors)
+            self.reproducibility_saver.save_vocabulary(self.vocab)
 
             self._train_cnn_attention_model()
 
@@ -66,22 +47,17 @@ class CnnAttentionModel(object):
         testing_data_tensors = self.preprocessors['testing_dataset_preprocessor'].get_tensorise_data()
         testing_body_subtokens = np.expand_dims(testing_data_tensors['body_tokens'], axis=-1)
         testing_method_name_subtokens = np.expand_dims(testing_data_tensors['name_tokens'], axis=-1)
-
+        self.logger.info('Evaluate F1 score on corpus {}'.format(testing_body_subtokens.shape[0]))
         f1_evaluation, visualised_input = evaluate_f1(self.model,
                                                       self.vocab,
                                                       testing_body_subtokens,
                                                       testing_method_name_subtokens,
-                                                      self.hyperparameters['beam_search_config'])
-        with open('{}/results.txt'.format(self.directory), 'w') as fp:
-            fp.write(str(f1_evaluation))
-
-        with open('{}/visualised_results.txt'.format(self.directory), 'w') as fp:
-            fp.write(visualised_input)
-
+                                                      self.hyperparameters['beam_search_config'],
+                                                      visualise_prediction=True)
+        self.reproducibility_saver.save_f1_results(f1_evaluation)
+        self.reproducibility_saver.save_visualised_results(visualised_input)
         # Store evaluation size
-        with open('{}/inputs.txt'.format(self.directory), 'a') as fp:
-            inputs_str = "Testing samples: {}".format(testing_body_subtokens.shape[0])
-            fp.write(inputs_str)
+        self.reproducibility_saver.save_training_samples_info(testing_body_subtokens)
 
         return f1_evaluation
 

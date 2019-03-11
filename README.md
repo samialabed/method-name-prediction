@@ -44,8 +44,9 @@ Where:
 * `PATH_TO_CONFIG_FILE`: The model hyperparameters as json config file. Expected of config files are in the [configs directory](https://github.com/samialabed/method-name-prediction/tree/master/configs)
 * `[options]` can be any of the following:
   * `--trained-model-dir=DIR` where DIR is the path towards a previously trained model.
-  * `--use-same-input-dir=bool` if specified the evaluation/inference will use the exact same data used to train and validate the model intended to reproduce the same results. 
+  * `--use-same-input-dir` if specified the evaluation/inference will use the exact same data used to train and validate the model intended to reproduce the same results. 
   * `--help` to show help screen.
+  * `--debug` to intercept any failure and enable debugging, also output DEBUG logs to console.
 
 
 The model will create a directory in the trainied_models
@@ -54,7 +55,7 @@ The model will create a directory in the trainied_models
 
 
 Output files:
-* `config.json` Copy of the hyperparameters used in training the model.
+* `hyperparameters.json` Copy of the hyperparameters used in training the model.
 * `inputs.txt` Stats about the input including how many methods used in training/testing/validating.
 * `results.txt` The model f1 score, unknown accuracy, and exact copy accuracy.
 * `model_accuracy.png` and `model_loss.png` The training/validating model loss and accuracy.

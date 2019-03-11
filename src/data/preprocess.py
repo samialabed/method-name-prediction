@@ -138,4 +138,7 @@ class PreProcessor(object):
                 yield feature_extractor.retrieve_methods_content()
         # TODO separate this into multiple exceptions and use it to skip tests and others files
         except Exception as e:
-            print("Failed to load data from path: {}. Exception: {}".format(path, e))
+            # This means the method isn't traditional in the sense that it either doesn't contain body
+            # (abstract method) or is an annonymous function, in both cases they are not input the model accepts,
+            # so the warning can be safely ignored.
+            self.logger.warning("Failed to load data from path: {}. Exception: {}".format(path, e))

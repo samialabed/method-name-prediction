@@ -20,7 +20,7 @@ def evaluate_f1(model: keras.Model,
         # model prediction expects 3 dimensions, a single input won't have the batch dimension, manually add it
         input_method_body_subtokens = np.expand_dims(input_method_body_subtokens, 0)
 
-    predictions = model.predict(input_method_body_subtokens)
+    predictions = model.predict(input_method_body_subtokens, batch_size=1)
 
     padding_id = vocab.get_id_or_unk(vocab.get_pad())
     begin_of_sentence_id = vocab.get_id_or_unk(SENTENCE_START_TOKEN)
