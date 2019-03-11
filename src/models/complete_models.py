@@ -7,7 +7,7 @@ from tensorflow.python import keras
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.callbacks import ModelCheckpoint
 
-from data.preprocess import PreProcessor
+from data.processor import Processor
 from models.cnn_attention import ConvAttention
 from utils.f1_evaluator import evaluate_f1
 from utils.run_utils import save_train_validate_history
@@ -17,7 +17,7 @@ from utils.save_util import ReproducibilitySaver, OutputFilesNames
 class CnnAttentionModel(object):
     def __init__(self,
                  hyperparameters: Dict[str, any],
-                 preprocessors: Dict[str, PreProcessor],
+                 preprocessors: Dict[str, Processor],
                  reproducibility_saver: ReproducibilitySaver):
         self.reproducibility_saver = reproducibility_saver
         self.hyperparameters = hyperparameters
@@ -29,9 +29,10 @@ class CnnAttentionModel(object):
         # create model
         self.model = self._compile_cnn_attention_model()
 
-        if self.reproducibility_saver.restore_model:
+        if self.reproducibility_saver.trained_model_dir:
             self.logger.info('Loading saved weights')
-            self.model.load_weights("{}/{}".format(self.directory, OutputFilesNames.FINAL_MODEL_WEIGHT))
+            self.model.load_weights("{}/{}".format(self.reproducibility_saver.trained_model_dir,
+                                                   OutputFilesNames.FINAL_MODEL_WEIGHT))
         else:
             # TODO move those out into the saver model
             # Save name of files to allow reproducibility
@@ -39,7 +40,6 @@ class CnnAttentionModel(object):
             self.reproducibility_saver.save_hyperparameters(hyperparameters)
             self.reproducibility_saver.save_preprocessed_dirs(preprocessors)
             self.reproducibility_saver.save_vocabulary(self.vocab)
-
             self._train_cnn_attention_model()
 
     def evaluate_f1(self):
@@ -56,8 +56,7 @@ class CnnAttentionModel(object):
                                                       visualise_prediction=True)
         self.reproducibility_saver.save_f1_results(f1_evaluation)
         self.reproducibility_saver.save_visualised_results(visualised_input)
-        # Store evaluation size
-        self.reproducibility_saver.save_training_samples_info(testing_body_subtokens)
+        self.reproducibility_saver.save_into_input_info_file(testing_body_subtokens.shape[0])
 
         return f1_evaluation
 
@@ -89,11 +88,10 @@ class CnnAttentionModel(object):
         validating_dataset = (np.expand_dims(validating_data_tensors['body_tokens'], axis=-1),
                               np.expand_dims(validating_data_tensors['name_tokens'], axis=-1))
 
-        # Store input size
-        with open('{}/inputs.txt'.format(self.directory), 'w') as fp:
-            inputs_str = "Training samples: {}, validating samples: {}".format(training_body_subtokens.shape[0],
-                                                                               validating_dataset[0].shape[0])
-            fp.write(inputs_str)
+        input_information = "Training samples: {}, validating samples: {}".format(training_body_subtokens.shape[0],
+                                                                                  validating_dataset[0].shape[0])
+        self.reproducibility_saver.save_into_input_info_file(input_information)
+
         # training loop
         model_hyperparameters = self.hyperparameters['model_hyperparameters']
         checkpoint_fp = "{}/weights-{{epoch:02d}}-{{val_acc:.2f}}.hdf5".format(self.directory)

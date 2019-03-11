@@ -3,13 +3,13 @@ import tensorflow as tf
 from tensorflow.python import keras
 from tensorflow.python.keras import layers
 
-from data.preprocess import PreProcessor
+from data.processor import Processor
 from models.cnn_attention import ConvAttention
 
 tf.enable_eager_execution()
 
-data = PreProcessor(config=PreProcessor.DEFAULT_CONFIG,
-                    data_dir='data/raw/r252-corpus-features/org/elasticsearch/action/admin/cluster/allocation/')
+data = Processor(config=Processor.DEFAULT_CONFIG,
+                 data_dir='data/raw/r252-corpus-features/org/elasticsearch/action/admin/cluster/allocation/')
 
 vocab = data.metadata['token_vocab']
 processed = data.get_tensorise_data()

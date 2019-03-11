@@ -3,7 +3,7 @@ from typing import Dict
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
-from data.preprocess import PreProcessor, get_data_files_from_directory
+from data.processor import Processor, get_data_files_from_directory
 from utils.save_util import ReproducibilitySaver
 
 
@@ -31,12 +31,12 @@ def save_train_validate_history(directory: str, history):
 
 def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      input_data_dir: str,
-                                     reproducibility_saver: ReproducibilitySaver) -> Dict[str, PreProcessor]:
+                                     reproducibility_saver: ReproducibilitySaver) -> Dict[str, Processor]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
 
     vocabulary = None
     # TODO make it save the tensorised value
-    if reproducibility_saver.restore_model:
+    if reproducibility_saver.trained_model_dir:
         vocabulary = reproducibility_saver.restore_vocabulary()
 
     if reproducibility_saver.restore_data:
@@ -54,15 +54,15 @@ def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
         print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
                                                                                 len(test_data_files),
                                                                                 len(validate_data_files)))
-    training_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                 data_files=train_data_files,
-                                                 vocabulary=vocabulary)
-    validating_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                   data_files=validate_data_files,
-                                                   vocabulary=training_dataset_preprocessor.vocabulary)
-    testing_dataset_preprocessor = PreProcessor(config=preprocessor_hyperparameters,
-                                                data_files=test_data_files,
+    training_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                              data_files=train_data_files,
+                                              vocabulary=vocabulary)
+    validating_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                                data_files=validate_data_files,
                                                 vocabulary=training_dataset_preprocessor.vocabulary)
+    testing_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                             data_files=test_data_files,
+                                             vocabulary=training_dataset_preprocessor.vocabulary)
 
     return {'training_dataset_preprocessor': training_dataset_preprocessor,
             'validating_dataset_preprocessor': validating_dataset_preprocessor,

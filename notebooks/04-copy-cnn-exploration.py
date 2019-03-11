@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.python import keras
 from tensorflow.python.keras import layers
 
-from data.preprocess import PreProcessor, get_data_files_from_directory
+from data.processor import Processor, get_data_files_from_directory
 from models.copy_cnn_attention import CopyAttention, model_objective
 
 tf.enable_eager_execution()
@@ -47,14 +47,14 @@ train_data_files, validate_data_files = train_test_split(train_data_files, train
 print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
                                                                         len(test_data_files),
                                                                         len(validate_data_files)))
-training_dataset_preprocessor = PreProcessor(config=hyperparameters['preprocessor_config'],
-                                             data_files=train_data_files)
-validating_dataset_preprocessor = PreProcessor(config=hyperparameters['preprocessor_config'],
-                                               data_files=validate_data_files,
-                                               vocabulary=training_dataset_preprocessor.vocabulary)
-testing_dataset_preprocessor = PreProcessor(config=hyperparameters['preprocessor_config'],
-                                            data_files=test_data_files,
+training_dataset_preprocessor = Processor(config=hyperparameters['preprocessor_config'],
+                                          data_files=train_data_files)
+validating_dataset_preprocessor = Processor(config=hyperparameters['preprocessor_config'],
+                                            data_files=validate_data_files,
                                             vocabulary=training_dataset_preprocessor.vocabulary)
+testing_dataset_preprocessor = Processor(config=hyperparameters['preprocessor_config'],
+                                         data_files=test_data_files,
+                                         vocabulary=training_dataset_preprocessor.vocabulary)
 
 # In[5]:
 

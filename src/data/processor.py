@@ -38,7 +38,7 @@ def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None)
     return np.array(files)
 
 
-class PreProcessor(object):
+class Processor(object):
 
     def __init__(self, config: Dict[str, Any], data_files: List[str],
                  max_num_files: int = None, vocabulary: Vocabulary = None):
@@ -102,10 +102,8 @@ class PreProcessor(object):
 
         for file_token_seqs in files_token_seqs:
             for (method_name, method_body) in file_token_seqs:
-                # <S> method name </S>
                 loaded_data['name_tokens'].append(vocab.get_id_or_unk_multiple(method_name,
                                                                                pad_to_size=max_chunk_length))
-                # <S> method body </S>
                 loaded_data['body_tokens'].append(vocab.get_id_or_unk_multiple(method_body,
                                                                                pad_to_size=max_chunk_length))
 
@@ -139,6 +137,6 @@ class PreProcessor(object):
         # TODO separate this into multiple exceptions and use it to skip tests and others files
         except Exception as e:
             # This means the method isn't traditional in the sense that it either doesn't contain body
-            # (abstract method) or is an annonymous function, in both cases they are not input the model accepts,
+            # (abstract method) or is an anonymous function, in both cases they are not input the model accepts,
             # so the warning can be safely ignored.
             self.logger.warning("Failed to load data from path: {}. Exception: {}".format(path, e))
