@@ -39,6 +39,8 @@ def get_data_files_from_directory(data_dir, skip_tests=True, max_num_files=None)
 
 
 class Processor(object):
+    # TODO consider adding support for Keras.utils.sequence for when the dataset is too large
+    #  although the model should be trained on every project by itself, it is unlikely that raw source code > 16gb
 
     def __init__(self, config: Dict[str, Any], data_files: List[str],
                  max_num_files: int = None, vocabulary: Vocabulary = None):
@@ -136,4 +138,4 @@ class Processor(object):
                                                           skip_tests=self.config['skip_tests'])
                 yield feature_extractor.retrieve_methods_content()
         except UnsupportedMethodStructureException as e:
-            self.logger.warning("Failed to load data from path: {}. Exception: {}".format(path, e))
+            self.logger.warning("Skipping the unsupported method {}. From path: {}.".format(e, path))

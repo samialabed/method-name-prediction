@@ -34,7 +34,6 @@ class CnnAttentionModel(object):
             self.model.load_weights("{}/{}".format(self.reproducibility_saver.trained_model_dir,
                                                    OutputFilesNames.FINAL_MODEL_WEIGHT))
         else:
-            # TODO move those out into the saver model
             # Save name of files to allow reproducibility
             self.logger.info('Saving hyperparameters, training, testing, validating, and vocabs')
             self.reproducibility_saver.save_hyperparameters(hyperparameters)

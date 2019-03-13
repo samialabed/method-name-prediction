@@ -19,9 +19,13 @@ def clean_target_from_padding(target: np.ndarray):
     return [np.trim_zeros(x.flatten(), 'b') for x in target]
 
 
-def beam_search(predictions: np.ndarray, y: np.ndarray,
-                padding_token_id: int, start_sentence_token_id: int, end_sentence_token_id: int,
-                beam_width: int = 5, beam_top_paths: int = 5):
+def beam_search(predictions: np.ndarray,
+                y: np.ndarray,
+                padding_token_id: int,
+                start_sentence_token_id: int,
+                end_sentence_token_id: int,
+                beam_width: int = 5,
+                beam_top_paths: int = 5):
     """
     predictions: output from a softmax layer, y true labels
     # TODO if time permits implement own beam search, TF is too slow
@@ -32,6 +36,7 @@ def beam_search(predictions: np.ndarray, y: np.ndarray,
     beam_search_predictions_list = []
     beam_search_probs_list = []
     for pred in predictions:
+        print(pred.shape)
         top_path_prediction_tensors, probs = K.ctc_decode(
             np.expand_dims(pred, 0),
             (y.shape[1],),
