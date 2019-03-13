@@ -1,0 +1,60 @@
+==================Begin Words===============================
+input_body: ['<s>', 'super', 'lparen', 'acknowledged', 'rparen', 'semi', 'this', 'dot', 'state', 'eq', 'state', 'semi', 'this', 'dot', 'explanations', 'eq', 'explanations', 'semi', '</s>']
+target_name: ['<s>', 'cluster', 'reroute', 'response', '</s>']
+predictions: [['<s>', '</s>']]
+probs: [305.613]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'this', 'dot', 'statement', 'eq', 'statement', 'semi', 'this', 'dot', 'cursor', 'eq', 'cursor', 'semi', 'this', 'dot', 'default', 'calendar', 'eq', 'calendar', 'dot', 'get', 'instance', 'lparen', '%UNK%', 'dot', 'time', 'zone', 'lparen', 'rparen', 'comma', 'locale', 'dot', 'root', 'rparen', 'semi', 'list', 'lt', 'column', 'info', 'gt', 'columns', 'eq', 'cursor', 'dot', 'columns', 'lparen', 'rparen', 'semi', 'for', 'lparen', 'int', 'i', 'eq', '0', 'semi', 'i', 'lt', 'columns', 'dot', 'size', 'lparen', 'rparen', 'semi', 'i', 'plusplus', 'rparen', 'lbrace', 'name', 'to', 'index', 'dot', 'put', 'lparen', 'columns', 'dot', 'get', 'lparen', 'i', 'rparen', 'dot', 'name', 'comma', 'integer', 'dot', 'value', 'of', 'lparen', 'i', 'plus', '1', 'rparen', 'rparen', 'semi', 'rbrace', '</s>']
+target_name: ['<s>', 'jdbc', 'result', 'set', '</s>']
+predictions: [['<s>', '</s>']]
+probs: [131.75829]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'check', 'open', 'lparen', 'rparen', 'semi', 'if', 'lparen', 'column', 'index', 'lt', '1', 'barbar', 'column', 'index', 'gt', 'cursor', 'dot', 'column', 'size', 'lparen', 'rparen', 'rparen', 'lbrace', 'throw', 'new', 'sqle', 'xception', 'lparen', '%UNK%', 'plus', 'column', 'index', 'plus', ']', 'rparen', 'semi', 'rbrace', 'object', 'object', 'eq', 'null', 'semi', 'try', 'lbrace', 'object', 'eq', 'cursor', 'dot', 'column', 'lparen', 'column', 'index', 'sub', '1', 'rparen', 'semi', 'rbrace', 'catch', 'lparen', 'illegal', 'argument', 'exception', 'iae', 'rparen', 'lbrace', 'throw', 'new', 'sqle', 'xception', 'lparen', 'iae', 'dot', 'get', 'message', 'lparen', 'rparen', 'rparen', 'semi', 'rbrace', 'was', 'null', 'eq', 'lparen', 'object', 'eqeq', 'null', 'rparen', 'semi', 'return', 'object', 'semi', '</s>']
+target_name: ['<s>', 'column', '</s>']
+predictions: [['<s>', '</s>']]
+probs: [36.97163]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'check', 'open', 'lparen', 'rparen', 'semi', 'integer', 'index', 'eq', 'name', 'to', 'index', 'dot', 'get', 'lparen', 'column', 'name', 'rparen', 'semi', 'if', 'lparen', 'index', 'eqeq', 'null', 'rparen', 'lbrace', 'throw', 'new', 'sqle', 'xception', 'lparen', '%UNK%', 'plus', 'column', 'name', 'plus', ']', 'rparen', 'semi', 'rbrace', 'return', 'index', 'dot', 'int', 'value', 'lparen', 'rparen', 'semi', '</s>']
+target_name: ['<s>', 'column', '</s>']
+predictions: [['<s>', '</s>']]
+probs: [38.482166]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'is', 'closed', 'lparen', 'rparen', 'rparen', 'lbrace', 'throw', 'new', 'sqle', 'xception', 'lparen', '%UNK%', 'rparen', 'semi', 'rbrace', '</s>']
+target_name: ['<s>', 'check', 'open', '</s>']
+predictions: [['<s>', '</s>']]
+probs: [247.32542]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'object', 'val', 'eq', 'column', 'lparen', 'column', 'index', 'rparen', 'semi', 'try', 'lbrace', 'return', 'val', 'eqeq', 'null', 'ques', 'null', 'colon', 'lparen', 'long', 'rparen', 'val', 'semi', 'rbrace', 'catch', 'lparen', 'class', 'cast', 'exception', '%UNK%', 'rparen', 'lbrace', 'throw', 'new', 'sqle', 'xception', 'lparen', '%UNK%', 'plus', 'column', 'index', 'plus', '%UNK%', 'comma', '%UNK%', 'rparen', 'semi', 'rbrace', '</s>']
+target_name: ['<s>', 'date', 'time', '</s>']
+predictions: [['<s>', 'suppress', '<s>', '%UNK%', '</s>']]
+probs: [746.6402]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'check', 'open', 'lparen', 'rparen', 'semi', 'if', 'lparen', 'column', 'index', 'lt', '1', 'barbar', 'column', 'index', 'gt', 'cursor', 'dot', 'column', 'size', 'lparen', 'rparen', 'rparen', 'lbrace', 'throw', 'new', 'sqle', 'xception', 'lparen', '%UNK%', 'plus', 'column', 'index', 'plus', ']', 'rparen', 'semi', 'rbrace', 'object', 'val', 'eq', 'column', 'lparen', 'column', 'index', 'rparen', 'semi', 'if', 'lparen', 'val', 'eqeq', 'null', 'rparen', 'lbrace', 'return', 'null', 'semi', 'rbrace', 'jdbct', 'ype', 'column', 'type', 'eq', 'cursor', 'dot', 'columns', 'lparen', 'rparen', 'dot', 'get', 'lparen', 'column', 'index', 'sub', '1', 'rparen', 'dot', 'type', 'semi', 'return', 'type', 'converter', 'dot', 'convert', 'lparen', 'val', 'comma', 'column', 'type', 'comma', 'type', 'rparen', 'semi', '</s>']
+target_name: ['<s>', 'convert', '</s>']
+predictions: [['<s>', 'column', '</s>']]
+probs: [10.212975]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'if', 'lparen', 'from', 'eqeq', 'to', 'rparen', 'lbrace', 'return', 'distance', 'semi', 'rbrace', 'else', 'lbrace', 'return', 'distance', 'star', 'from', 'dot', 'meters', 'slash', 'to', 'dot', 'meters', 'semi', 'rbrace', '</s>']
+target_name: ['<s>', 'convert', '</s>']
+predictions: [['<s>', '</s>']]
+probs: [180.03117]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'for', 'lparen', 'distance', 'unit', '%UNK%', 'colon', 'values', 'lparen', 'rparen', 'rparen', 'lbrace', 'for', 'lparen', 'string', 'name', 'colon', '%UNK%', 'dot', 'names', 'rparen', 'lbrace', 'if', 'lparen', 'name', 'dot', 'equals', 'lparen', 'unit', 'rparen', 'rparen', 'lbrace', 'return', '%UNK%', 'semi', 'rbrace', 'rbrace', 'rbrace', 'throw', 'new', 'illegal', 'argument', 'exception', 'lparen', '%UNK%', 'plus', 'unit', 'plus', ']', 'rparen', 'semi', '</s>']
+target_name: ['<s>', 'from', 'string', '</s>']
+predictions: [['<s>', 'from', '<s>', '</s>']]
+probs: [66.33277]
+=================================================
+==================Begin Words===============================
+input_body: ['<s>', 'for', 'lparen', 'distance', 'unit', 'unit', 'colon', 'values', 'lparen', 'rparen', 'rparen', 'lbrace', 'for', 'lparen', 'string', 'name', 'colon', 'unit', 'dot', 'names', 'rparen', 'lbrace', 'if', 'lparen', 'distance', 'dot', 'ends', 'with', 'lparen', 'name', 'rparen', 'rparen', 'lbrace', 'return', 'unit', 'semi', 'rbrace', 'rbrace', 'rbrace', 'return', 'default', 'unit', 'semi', '</s>']
+target_name: ['<s>', 'parse', 'unit', '</s>']
+predictions: [['<s>', 'unit', '<s>', '</s>']]
+probs: [39.73177]
+=================================================
