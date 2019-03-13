@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import pickle
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 from dpu_utils.mlutils import Vocabulary
@@ -24,8 +24,6 @@ class OutputFilesNames(object):
 
 
 class ReproducibilitySaver(object):
-    # TODO is there a better pythonic way to do this?
-
     def __init__(self, directory: str, trained_model_dir: dir, restore_data: bool):
         self.directory = directory
         self.trained_model_dir = trained_model_dir
@@ -74,7 +72,7 @@ class ReproducibilitySaver(object):
     def restore_preprocessed_dirs(self,
                                   restore_validating_file_list: bool = True,
                                   restore_training_file_list: bool = True,
-                                  restore_testing_file_list: bool = True) -> Dict[str, np.ndarray]:
+                                  restore_testing_file_list: bool = True) -> Dict[str, List[str]]:
         # TODO make this restore the tensor and not the directory
         return_dir = {}
         if restore_validating_file_list:

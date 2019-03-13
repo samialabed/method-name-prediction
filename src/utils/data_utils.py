@@ -19,8 +19,7 @@ def clean_target_from_padding(target: np.ndarray):
     return [np.trim_zeros(x.flatten(), 'b') for x in target]
 
 
-def beam_search(predictions: np.ndarray,
-                y: np.ndarray,
+def beam_search(predictions: List[np.ndarray],
                 padding_token_id: int,
                 start_sentence_token_id: int,
                 end_sentence_token_id: int,
@@ -36,10 +35,9 @@ def beam_search(predictions: np.ndarray,
     beam_search_predictions_list = []
     beam_search_probs_list = []
     for pred in predictions:
-        print(pred.shape)
         top_path_prediction_tensors, probs = K.ctc_decode(
             np.expand_dims(pred, 0),
-            (y.shape[1],),
+            (pred.shape[0],),
             greedy=False,
             beam_width=beam_width,
             top_paths=beam_top_paths

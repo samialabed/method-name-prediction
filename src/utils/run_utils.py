@@ -31,42 +31,53 @@ def save_train_validate_history(directory: str, history):
 
 def load_train_test_validate_dataset(hyperparameters: Dict[str, any],
                                      input_data_dir: str,
-                                     reproducibility_saver: ReproducibilitySaver) -> Dict[str, Processor]:
+                                     reproducibility_saver: ReproducibilitySaver) -> Dict[str, any]:
     preprocessor_hyperparameters = hyperparameters['preprocessor_config']
 
     vocabulary = None
-    # TODO make it save the tensorised value
+    returned_dict = {}
+
     if reproducibility_saver.trained_model_dir:
         vocabulary = reproducibility_saver.restore_vocabulary()
 
+    # TODO make it save the tensorised value
     if reproducibility_saver.restore_data:
-        restored_dirs = reproducibility_saver.restore_preprocessed_dirs()
-        train_data_files = restored_dirs['training_data_files']
+        # only need testing values
+        restored_dirs = reproducibility_saver.restore_preprocessed_dirs(restore_validating_file_list=False,
+                                                                        restore_training_file_list=False)
         test_data_files = restored_dirs['testing_data_files']
-        validate_data_files = restored_dirs['validating_data_files']
+        testing_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                                 data_files=test_data_files,
+                                                 vocabulary=vocabulary)
+        returned_dict['testing_dataset_preprocessor'] = testing_dataset_preprocessor
+
     else:
         print("Manually loading files from input_data_dir")
         all_files = get_data_files_from_directory(input_data_dir,
                                                   skip_tests=preprocessor_hyperparameters['skip_tests'])
         print("Total # files: {}".format(len(all_files)))
-        train_data_files, test_data_files = train_test_split(all_files, train_size=0.7)
-        train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9)
+        train_data_files, test_data_files = train_test_split(all_files, train_size=0.7, test_size=0.3)
+        train_data_files, validate_data_files = train_test_split(train_data_files, train_size=0.9, test_size=0.1)
         print("Training Data: {}, Testing Data: {}, Validating data: {}".format(len(train_data_files),
                                                                                 len(test_data_files),
                                                                                 len(validate_data_files)))
-    training_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
-                                              data_files=train_data_files,
-                                              vocabulary=vocabulary)
-    validating_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
-                                                data_files=validate_data_files,
-                                                vocabulary=training_dataset_preprocessor.vocabulary)
-    testing_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
-                                             data_files=test_data_files,
-                                             vocabulary=training_dataset_preprocessor.vocabulary)
 
-    return {'training_dataset_preprocessor': training_dataset_preprocessor,
-            'validating_dataset_preprocessor': validating_dataset_preprocessor,
-            'testing_dataset_preprocessor': testing_dataset_preprocessor}
+        training_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                                  data_files=train_data_files,
+                                                  vocabulary=vocabulary)
+        vocabulary = training_dataset_preprocessor.vocabulary
+        validating_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                                    data_files=validate_data_files,
+                                                    vocabulary=vocabulary)
+        testing_dataset_preprocessor = Processor(config=preprocessor_hyperparameters,
+                                                 data_files=test_data_files,
+                                                 vocabulary=vocabulary)
+        returned_dict['training_dataset_preprocessor'] = training_dataset_preprocessor
+        returned_dict['validating_dataset_preprocessor'] = validating_dataset_preprocessor
+        returned_dict['testing_dataset_preprocessor'] = testing_dataset_preprocessor
+
+    returned_dict['vocabulary'] = vocabulary
+    return returned_dict
 
 
 def assert_model_hyperparameters(hyperparameters: Dict[str, any]):

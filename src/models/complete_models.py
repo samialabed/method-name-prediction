@@ -1,8 +1,9 @@
 import logging
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import tensorflow as tf
+from dpu_utils.mlutils import Vocabulary
 from tensorflow.python import keras
 from tensorflow.python.keras import layers
 from tensorflow.python.keras.callbacks import ModelCheckpoint
@@ -17,12 +18,12 @@ from utils.save_util import ReproducibilitySaver, OutputFilesNames
 class CnnAttentionModel(object):
     def __init__(self,
                  hyperparameters: Dict[str, any],
-                 preprocessors: Dict[str, Processor],
+                 preprocessors: Dict[str, Union[Processor, Vocabulary]],
                  reproducibility_saver: ReproducibilitySaver):
         self.reproducibility_saver = reproducibility_saver
         self.hyperparameters = hyperparameters
         self.preprocessors = preprocessors
-        self.vocab = preprocessors['training_dataset_preprocessor'].vocabulary
+        self.vocab = preprocessors['vocabulary']
         self.logger = logging.getLogger(__name__)
         self.directory = self.reproducibility_saver.directory
 

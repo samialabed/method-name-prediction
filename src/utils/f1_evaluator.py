@@ -16,17 +16,17 @@ def evaluate_f1(model: keras.Model,
                 target_method_names: np.ndarray,
                 hyperparameters: Dict[str, any],
                 visualise_prediction=True):
+    padding_id = vocab.get_id_or_unk(vocab.get_pad())
+    begin_of_sentence_id = vocab.get_id_or_unk(SENTENCE_START_TOKEN)
+    end_of_sentence_id = vocab.get_id_or_unk(SENTENCE_END_TOKEN)
+
     if input_method_body_subtokens.ndim != 3:
         # model prediction expects 3 dimensions, a single input won't have the batch dimension, manually add it
         input_method_body_subtokens = np.expand_dims(input_method_body_subtokens, 0)
 
     predictions = model.predict(input_method_body_subtokens, batch_size=1)
 
-    padding_id = vocab.get_id_or_unk(vocab.get_pad())
-    begin_of_sentence_id = vocab.get_id_or_unk(SENTENCE_START_TOKEN)
-    end_of_sentence_id = vocab.get_id_or_unk(SENTENCE_END_TOKEN)
-
-    best_predictions, best_predictions_probs = beam_search(predictions, target_method_names,
+    best_predictions, best_predictions_probs = beam_search(predictions,
                                                            padding_id,
                                                            begin_of_sentence_id,
                                                            end_of_sentence_id,
