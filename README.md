@@ -3,6 +3,12 @@ This repository contains the Keras Implementation of [A convolutional attention 
 
 The model takes in a sequence of subtokens composed of Java's method body and output an extreme summarisation in form of predicted method name.
 
+Example input: 
+```java 
+hi--; while (lo < hi) { Object t = a[lo]; a[lo++] = a[hi]; a[hi--] = t; }
+```
+Example model output: `[reverse, range]`
+
 Status:
 * Successfully reproduce (and improve) results of the Convolution Attention Model.
 * The Copy Attention Model is struggling to learn useful features - the code exist and compliment notebooks to allow further investigation.
